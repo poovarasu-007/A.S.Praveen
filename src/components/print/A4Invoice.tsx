@@ -7,68 +7,91 @@ interface A4InvoiceProps {
   bill: Bill;
   settings: BusinessSettings;
   billNumber?: string;
+  isA5?: boolean;
 }
 
-export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber }) => {
+export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber, isA5 }) => {
   const displayBillNumber = billNumber || bill.billNumber;
+
+  // Determine Payment Status
+  const isCredit = bill.paymentMethod === 'Credit';
+  const paymentStatus = isCredit
+    ? 'PENDING'
+    : bill.amountReceived && bill.amountReceived < bill.grandTotal
+    ? 'PARTIAL'
+    : 'PAID';
+
   return (
-    <div className="a4-invoice bg-white text-gray-900 p-8 mx-auto w-[210mm] min-h-[297mm] shadow-lg border border-gray-200 print:border-none print:shadow-none print:p-6 print:w-[210mm] print:min-h-0 select-text font-sans text-xs">
-      {/* Header Banner – centered business info */}
-      <div className="border-b-2 border-agri-800 pb-4 mb-4 text-center">
-        <div className="flex items-center justify-center space-x-2 mb-1">
-          <span className="text-2xl">🌾</span>
-          <h1 className="text-2xl font-black text-agri-800 tracking-tight font-serif uppercase">
-            {settings.businessName}
+    <div
+      className={`a4-invoice bg-white text-gray-900 mx-auto shadow-lg border border-gray-300 print:border-none print:shadow-none print:m-0 print:p-4 select-text font-sans text-xs ${
+        isA5
+          ? 'w-[148mm] min-h-[210mm] p-4 text-[10px]'
+          : 'w-[210mm] min-h-[297mm] p-8 text-xs'
+      }`}
+    >
+      {/* 1. Centered Agricultural Business Header */}
+      <div className="border-b-2 border-agri-800 pb-3 mb-3 text-center">
+        <div className="flex items-center justify-center space-x-2 mb-0.5">
+          <span className="text-xl md:text-2xl">🌱</span>
+          <h1 className="text-xl md:text-2xl font-black text-agri-900 tracking-tight font-serif uppercase">
+            {settings.businessName || 'A.S. PRAVEEN TRADERS'}
           </h1>
-          <span className="text-2xl">🌾</span>
+          <span className="text-xl md:text-2xl">🌱</span>
         </div>
-        <p className="text-xs font-semibold text-agri-700 tracking-wide">
-          {settings.tagline}
+        <p className="text-xs font-bold text-agri-700 tracking-wide uppercase">
+          {settings.tagline || 'Agricultural Products & Farm Inputs'}
         </p>
-        <p className="text-xs text-gray-700 mt-1 leading-relaxed">
-          {settings.completeAddress}
+        <p className="text-[11px] text-gray-800 mt-1 font-medium leading-tight max-w-xl mx-auto">
+          {settings.completeAddress || 'NO : 2428, SATHYA NAGAR MAIN STREET, Thanipadi, Tiruvannamalai District, Tamil Nadu - 606708'}
         </p>
-        <div className="mt-1.5 flex flex-wrap justify-center gap-x-4 text-xs font-semibold text-gray-800">
-          <span>GSTIN: <strong className="text-agri-900">{settings.gstin}</strong></span>
-          <span>Mob: <strong className="text-agri-900">{settings.mobile1} | {settings.mobile2}</strong></span>
-          {settings.email && <span>Email: {settings.email}</span>}
+        <div className="mt-1.5 flex flex-wrap justify-center gap-x-5 text-[11px] font-bold text-gray-900">
+          <span>GSTIN: <strong className="text-agri-950 font-mono">{settings.gstin || '33HQYPP5735G1Z3'}</strong></span>
+          <span>Phone: <strong className="text-agri-950 font-mono">{settings.mobile1 || '8825633575'} / {settings.mobile2 || '9443990403'}</strong></span>
         </div>
 
-        {/* Invoice title + number row below centered header */}
-        <div className="mt-3 flex items-center justify-between">
-          <div className="inline-block bg-agri-800 text-white font-bold px-4 py-1.5 rounded uppercase tracking-wider text-sm shadow-sm">
-            Tax Invoice
+        {/* 2. Invoice / Bill Title Bar */}
+        <div className="mt-3 pt-2 border-t border-gray-200 flex items-center justify-between">
+          <div className="inline-block bg-agri-800 text-white font-black px-4 py-1 rounded uppercase tracking-wider text-xs shadow-sm">
+            INVOICE / BILL
           </div>
-          <div className="text-xs space-y-1 text-right">
-            <div><span className="text-gray-500">Invoice No:</span> <strong className="font-mono text-sm text-gray-900">{displayBillNumber}</strong></div>
-            <div><span className="text-gray-500">Invoice Date:</span> <strong className="text-gray-900">{formatDate(bill.date)}</strong></div>
-            <div><span className="text-gray-500">Time:</span> <strong className="text-gray-900">{formatTime(bill.time)}</strong></div>
-            <div><span className="text-gray-500">GST Mode:</span> <strong className="text-gray-900">{bill.gstMode}</strong></div>
+          <div className="text-[11px] space-y-0.5 text-right font-medium">
+            <div>
+              <span className="text-gray-500">Bill No:</span>{' '}
+              <strong className="font-mono text-xs text-agri-950 font-black">{displayBillNumber}</strong>
+            </div>
+            <div>
+              <span className="text-gray-500">Date:</span>{' '}
+              <strong className="text-gray-900">{formatDate(bill.date)}</strong>
+            </div>
+            <div>
+              <span className="text-gray-500">Time:</span>{' '}
+              <strong className="text-gray-900 font-mono">{formatTime(bill.time)}</strong>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Customer & Bill Meta Details Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-5 border border-gray-300 rounded-lg p-3 bg-agri-50/30">
+      {/* 3. Customer & Payment Details Grid */}
+      <div className="grid grid-cols-2 gap-3 mb-3 border border-gray-300 rounded-lg p-3 bg-agri-50/25">
         <div>
-          <div className="text-[11px] font-bold uppercase text-agri-800 tracking-wider mb-1">
-            Billed To (Customer Details):
+          <div className="text-[10px] font-black uppercase text-agri-800 tracking-wider mb-1">
+            Customer Details:
           </div>
-          <div className="text-sm font-bold text-gray-900 uppercase">
+          <div className="text-sm font-bold text-gray-950 uppercase">
             {bill.customer.name}
           </div>
           {bill.customer.mobile && (
-            <div className="text-xs text-gray-700 mt-0.5">
-              <span className="text-gray-500">Mobile:</span> {bill.customer.mobile}
+            <div className="text-[11px] text-gray-700 mt-0.5">
+              <span className="text-gray-500">Mobile:</span> <strong className="font-mono">{bill.customer.mobile}</strong>
             </div>
           )}
           {bill.customer.address && (
-            <div className="text-xs text-gray-700 mt-0.5">
-              <span className="text-gray-500">Address:</span> {bill.customer.address}
+            <div className="text-[11px] text-gray-700 mt-0.5">
+              <span className="text-gray-500">Village / Address:</span> {bill.customer.address}
             </div>
           )}
           {bill.customer.gstin && (
-            <div className="text-xs text-gray-700 mt-0.5">
+            <div className="text-[11px] text-gray-700 mt-0.5">
               <span className="text-gray-500">GSTIN:</span> <strong className="font-mono">{bill.customer.gstin}</strong>
             </div>
           )}
@@ -76,54 +99,67 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
 
         <div className="text-right flex flex-col justify-between">
           <div>
-            <span className="text-[11px] font-bold uppercase text-agri-800 tracking-wider">
-              Payment Information:
+            <span className="text-[10px] font-black uppercase text-agri-800 tracking-wider">
+              Payment Status & Method:
             </span>
-            <div className="mt-1 text-xs">
-              <span className="text-gray-500">Payment Mode:</span>{' '}
-              <span className="font-bold bg-agri-100 text-agri-800 px-2 py-0.5 rounded border border-agri-200">
+            <div className="mt-1 flex items-center justify-end space-x-2 text-[11px]">
+              <span className="text-gray-500">Method:</span>
+              <span className="font-bold bg-agri-100 text-agri-900 px-2 py-0.5 rounded border border-agri-300">
                 {bill.paymentMethod}
+              </span>
+              <span
+                className={`font-black px-2 py-0.5 rounded text-[10px] ${
+                  paymentStatus === 'PAID'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : paymentStatus === 'PENDING'
+                    ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}
+              >
+                {paymentStatus}
               </span>
             </div>
             {bill.amountReceived !== undefined && bill.amountReceived > 0 && (
-              <div className="mt-1 text-xs text-gray-600">
+              <div className="mt-1 text-[11px] text-gray-600 font-mono">
                 <span>Received: {formatCurrency(bill.amountReceived)} | Balance: {formatCurrency(bill.balance || 0)}</span>
               </div>
             )}
           </div>
-          <div className="text-[11px] text-gray-500">
-            Billed By: <span className="font-medium text-gray-700">{bill.createdBy}</span>
+          <div className="text-[10px] text-gray-500">
+            Created By: <span className="font-semibold text-gray-800">{bill.createdBy}</span>
           </div>
         </div>
       </div>
 
-      {/* Item Table */}
-      <table className="w-full border-collapse border border-gray-300 mb-4 text-xs">
+      {/* 4. Product Table */}
+      <table className="w-full border-collapse border border-gray-300 mb-3 text-[11px]">
         <thead>
-          <tr className="bg-agri-700 text-white font-bold">
-            <th className="border border-agri-600 p-2 text-center w-10">S.No</th>
-            <th className="border border-agri-600 p-2 text-left">Product Description</th>
-            <th className="border border-agri-600 p-2 text-center w-16">Unit</th>
-            <th className="border border-agri-600 p-2 text-right w-16">Qty</th>
-            <th className="border border-agri-600 p-2 text-right w-20">Rate (₹)</th>
-            <th className="border border-agri-600 p-2 text-center w-16">GST %</th>
-            <th className="border border-agri-600 p-2 text-right w-24">Taxable Value</th>
-            <th className="border border-agri-600 p-2 text-right w-24">Total (₹)</th>
+          <tr className="bg-agri-800 text-white font-bold">
+            <th className="border border-agri-700 p-1.5 text-center w-8">S.No</th>
+            <th className="border border-agri-700 p-1.5 text-left">Product / Agricultural Item</th>
+            <th className="border border-agri-700 p-1.5 text-center w-16">HSN/SAC</th>
+            <th className="border border-agri-700 p-1.5 text-center w-12">Qty</th>
+            <th className="border border-agri-700 p-1.5 text-center w-12">Unit</th>
+            <th className="border border-agri-700 p-1.5 text-right w-16">Rate (₹)</th>
+            <th className="border border-agri-700 p-1.5 text-center w-14">Tax %</th>
+            <th className="border border-agri-700 p-1.5 text-right w-20">Amount (₹)</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
           {bill.items.map((item, index) => (
-            <tr key={item.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
-              <td className="border border-gray-300 p-2 text-center font-medium">{index + 1}</td>
-              <td className="border border-gray-300 p-2">
-                <div className="font-bold text-gray-900">{item.productName}</div>
+            <tr key={item.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-agri-50/20'}>
+              <td className="border border-gray-300 p-1.5 text-center font-medium text-gray-600">{index + 1}</td>
+              <td className="border border-gray-300 p-1.5">
+                <div className="font-bold text-gray-950">{item.productName}</div>
               </td>
-              <td className="border border-gray-300 p-2 text-center text-gray-700">{item.unit}</td>
-              <td className="border border-gray-300 p-2 text-right font-semibold">{item.quantity}</td>
-              <td className="border border-gray-300 p-2 text-right">{item.rate.toFixed(2)}</td>
-              <td className="border border-gray-300 p-2 text-center text-gray-700">{item.gstRate}%</td>
-              <td className="border border-gray-300 p-2 text-right font-mono">{item.taxableAmount.toFixed(2)}</td>
-              <td className="border border-gray-300 p-2 text-right font-bold text-gray-900 font-mono">
+              <td className="border border-gray-300 p-1.5 text-center font-mono text-gray-600">
+                1209
+              </td>
+              <td className="border border-gray-300 p-1.5 text-center font-bold text-gray-900">{item.quantity}</td>
+              <td className="border border-gray-300 p-1.5 text-center text-gray-700">{item.unit}</td>
+              <td className="border border-gray-300 p-1.5 text-right font-mono">{item.rate.toFixed(2)}</td>
+              <td className="border border-gray-300 p-1.5 text-center text-gray-700">{item.gstRate}%</td>
+              <td className="border border-gray-300 p-1.5 text-right font-bold text-gray-950 font-mono">
                 {item.totalAmount.toFixed(2)}
               </td>
             </tr>
@@ -131,37 +167,51 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
         </tbody>
       </table>
 
-      {/* Summary and Calculation Area */}
-      <div className="grid grid-cols-12 gap-4 items-start mb-6">
-        {/* Left: Amount in words & Bank/Terms */}
-        <div className="col-span-7 space-y-3">
-          <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-            <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+      {/* 5. Total Calculation Section */}
+      <div className="grid grid-cols-12 gap-3 items-start mb-4">
+        {/* Left: Amount in Words & Terms / UPI QR Area */}
+        <div className="col-span-7 space-y-2.5">
+          <div className="border border-gray-300 rounded-lg p-2.5 bg-gray-50">
+            <div className="text-[10px] font-black text-gray-600 uppercase tracking-wider">
               Amount in Words:
             </div>
-            <div className="text-sm font-bold text-agri-900 font-serif italic mt-0.5">
-              {numberToWords(bill.grandTotal)}
+            <div className="text-xs font-black text-agri-950 font-serif italic mt-0.5">
+              Rupees {numberToWords(bill.grandTotal)}
             </div>
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-3 text-[11px] text-gray-600 space-y-1">
-            <div className="font-bold text-gray-700 uppercase tracking-wider text-[10px]">
+          {/* UPI QR Code placeholder if UPI selected */}
+          {bill.paymentMethod === 'UPI' && (
+            <div className="border border-blue-200 rounded-lg p-2 bg-blue-50/50 flex items-center space-x-3">
+              <div className="w-14 h-14 bg-white border border-blue-300 rounded-lg flex items-center justify-center text-2xl shadow-inner shrink-0">
+                📱
+              </div>
+              <div className="text-[10px] text-blue-900">
+                <div className="font-bold">Scan & Pay via UPI</div>
+                <div className="text-gray-600">GPay / PhonePe / Paytm / BHIM</div>
+                <div className="font-mono font-bold text-agri-800">8825633575@upi</div>
+              </div>
+            </div>
+          )}
+
+          <div className="border border-gray-200 rounded-lg p-2.5 text-[10px] text-gray-600 space-y-0.5">
+            <div className="font-bold text-gray-700 uppercase tracking-wider text-[9px]">
               Terms & Conditions:
             </div>
-            <p>1. Goods once sold will not be taken back or exchanged without valid original bill.</p>
-            <p>2. Warranty on agricultural sprayers and tools as per manufacturer policy.</p>
+            <p>1. Quality seeds & agro-inputs sold with manufacturer batch verification.</p>
+            <p>2. Goods once sold will not be accepted back without original tax bill.</p>
             <p>3. Subject to Tiruvannamalai jurisdiction.</p>
           </div>
         </div>
 
         {/* Right: Tax Breakdown & Grand Total */}
         <div className="col-span-5 border border-gray-300 rounded-lg overflow-hidden">
-          <div className="bg-gray-100 px-3 py-2 border-b border-gray-300 font-bold text-gray-800 text-xs flex justify-between">
+          <div className="bg-gray-100 px-3 py-1.5 border-b border-gray-300 font-bold text-gray-800 text-[11px] flex justify-between">
             <span>Subtotal (Taxable):</span>
             <span className="font-mono">{formatCurrency(bill.subtotal)}</span>
           </div>
 
-          <div className="p-3 space-y-2 bg-white text-xs">
+          <div className="p-2 space-y-1 bg-white text-[11px]">
             {bill.gstMode === 'CGST_SGST' && (
               <>
                 <div className="flex justify-between text-gray-700">
@@ -190,33 +240,36 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
             )}
           </div>
 
-          <div className="bg-agri-800 text-white px-3 py-2.5 flex justify-between items-center text-sm font-bold">
-            <span className="uppercase tracking-wider">Grand Total:</span>
-            <span className="text-base font-mono text-agri-gold font-black">
+          <div className="bg-agri-800 text-white px-3 py-2 flex justify-between items-center text-xs font-bold">
+            <span className="uppercase tracking-wider">TOTAL AMOUNT:</span>
+            <span className="text-sm font-mono text-agri-gold font-black">
               {formatCurrency(bill.grandTotal)}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Signatures & Footer Note */}
-      <div className="pt-8 border-t border-gray-300 grid grid-cols-2 gap-4 items-end">
+      {/* 6. Footer & Signature */}
+      <div className="pt-4 border-t border-gray-300 grid grid-cols-2 gap-4 items-end">
         <div>
-          <p className="text-[11px] font-semibold text-agri-800">
-            {settings.invoiceFooterMessage || 'Thank you for doing business with A.S.Praveen Traders'}
+          <p className="text-[11px] font-bold text-agri-900">
+            Thank you for your business!
           </p>
-          <p className="text-[10px] text-gray-500 mt-1">
-            Certified that the particulars given above are true and correct.
+          <p className="text-[10px] font-bold text-agri-700 uppercase">
+            A.S. Praveen Traders • Agricultural Products & Farm Inputs
+          </p>
+          <p className="text-[10px] text-amber-900 font-serif italic mt-0.5">
+            "Supporting Farmers • Growing Together"
           </p>
         </div>
 
         <div className="text-right">
-          <p className="text-xs font-bold text-gray-800 uppercase">
-            For {settings.businessName}
+          <p className="text-[11px] font-bold text-gray-900 uppercase">
+            For A.S. PRAVEEN TRADERS
           </p>
-          <div className="h-14 flex items-end justify-end">
-            <span className="border-t border-gray-400 pt-1 text-[11px] text-gray-600 font-medium px-4">
-              Authorized Signatory
+          <div className="h-12 flex items-end justify-end">
+            <span className="border-t border-gray-400 pt-0.5 text-[10px] text-gray-700 font-bold px-3">
+              Authorized Signature
             </span>
           </div>
         </div>
@@ -224,3 +277,4 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
     </div>
   );
 };
+

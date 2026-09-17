@@ -86,6 +86,21 @@
     padding: 5mm !important;
     min-height: auto !important;
   }
+
+  /* A5 Invoice Print Setup */
+  .print-area-a5 {
+    width: 148mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  .print-area-a5 .a4-invoice {
+    width: 148mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 3mm !important;
+    min-height: auto !important;
+  }
 }
 
 /* Custom scrollbars */

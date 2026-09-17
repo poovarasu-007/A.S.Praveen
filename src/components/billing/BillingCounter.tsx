@@ -91,6 +91,14 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
   // Keyboard shortcuts listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // If modal is open, let Esc close it
+      if (e.key === 'Escape') {
+        if (isProductModalOpen) setIsProductModalOpen(false);
+        if (isSuccessModalOpen) setIsSuccessModalOpen(false);
+        if (isPrintModalOpen) setIsPrintModalOpen(false);
+        return;
+      }
+
       if (e.key === 'F2') {
         e.preventDefault();
         handleClearForm();
@@ -100,12 +108,20 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
       } else if (e.key === 'F8') {
         e.preventDefault();
         handleSaveBill(true);
+      } else if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleSaveBill(false);
+      } else if (e.ctrlKey && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        if (items.length > 0 && customerName.trim()) {
+          handleSaveBill(true);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [items, customerName, customerMobile, customerAddress, gstMode, paymentMethod, amountReceived]);
+  }, [items, customerName, customerMobile, customerAddress, gstMode, paymentMethod, amountReceived, isProductModalOpen, isSuccessModalOpen, isPrintModalOpen]);
 
   // Autocomplete customer selection
   const customerSuggestions = existingCustomers.filter(c =>

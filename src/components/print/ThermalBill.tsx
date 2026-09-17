@@ -11,6 +11,14 @@ interface ThermalBillProps {
 
 export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNumber }) => {
   const displayBillNumber = billNumber || bill.billNumber;
+
+  const isCredit = bill.paymentMethod === 'Credit';
+  const paymentStatus = isCredit
+    ? 'PENDING'
+    : bill.amountReceived && bill.amountReceived < bill.grandTotal
+    ? 'PARTIAL'
+    : 'PAID';
+
   return (
     <div
       className="thermal-bill font-mono text-[12px] leading-tight text-black bg-white p-3 mx-auto w-[80mm] max-w-[80mm] border border-dashed border-gray-300 shadow-sm print:border-none print:p-0 print:shadow-none print:w-[80mm] select-text"
@@ -18,14 +26,15 @@ export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNu
     >
       {/* Header */}
       <div className="text-center pb-2">
-        <h1 className="text-[16px] font-bold tracking-tight uppercase">
-          {settings.businessName}
+        <div className="text-base">🌱 🌾 🌱</div>
+        <h1 className="text-[16px] font-black tracking-tight uppercase">
+          {settings.businessName || 'A.S. PRAVEEN TRADERS'}
         </h1>
-        <p className="text-[11px] font-semibold">{settings.tagline}</p>
-        <p className="text-[10px] mt-0.5">{settings.completeAddress}</p>
-        <p className="text-[11px] font-bold mt-1">GSTIN: {settings.gstin}</p>
-        <p className="text-[10px]">
-          Mob: {settings.mobile1} | {settings.mobile2}
+        <p className="text-[11px] font-bold uppercase">{settings.tagline || 'Agricultural Products & Farm Inputs'}</p>
+        <p className="text-[10px] mt-0.5">NO : 2428, SATHYA NAGAR MAIN ST, THANIPADI, TIRUVANNAMALAI - 606708</p>
+        <p className="text-[11px] font-bold mt-1">GSTIN: {settings.gstin || '33HQYPP5735G1Z3'}</p>
+        <p className="text-[10px] font-bold">
+          Mob: {settings.mobile1 || '8825633575'} / {settings.mobile2 || '9443990403'}
         </p>
       </div>
 
@@ -39,7 +48,11 @@ export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNu
         </div>
         <div className="flex justify-between text-[10px]">
           <span>Time: {formatTime(bill.time)}</span>
-          <span className="font-semibold">Mode: {bill.paymentMethod}</span>
+          <span className="font-bold">Status: {paymentStatus}</span>
+        </div>
+        <div className="flex justify-between text-[10px]">
+          <span>Payment: {bill.paymentMethod}</span>
+          <span>GST: {bill.gstMode}</span>
         </div>
       </div>
 
@@ -71,14 +84,14 @@ export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNu
           {bill.items.map((item, idx) => (
             <tr key={idx} className="align-top">
               <td className="py-1 pr-1">
-                <div className="font-semibold">{item.productName}</div>
+                <div className="font-bold">{item.productName}</div>
                 <div className="text-[9px] text-gray-700">
                   GST {item.gstRate}% {item.unit && `(${item.unit})`}
                 </div>
               </td>
-              <td className="text-center py-1 px-1 whitespace-nowrap">{item.quantity}</td>
+              <td className="text-center py-1 px-1 whitespace-nowrap font-bold">{item.quantity}</td>
               <td className="text-right py-1 px-1 whitespace-nowrap">{item.rate.toFixed(2)}</td>
-              <td className="text-right py-1 pl-1 font-bold whitespace-nowrap">{item.totalAmount.toFixed(2)}</td>
+              <td className="text-right py-1 pl-1 font-black whitespace-nowrap">{item.totalAmount.toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
@@ -119,8 +132,8 @@ export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNu
         
         <div className="border-t border-dashed border-black my-1" />
 
-        <div className="flex justify-between text-[14px] font-bold">
-          <span>GRAND TOTAL:</span>
+        <div className="flex justify-between text-[14px] font-black">
+          <span>TOTAL AMOUNT:</span>
           <span>{formatCurrency(bill.grandTotal)}</span>
         </div>
 
@@ -142,17 +155,19 @@ export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNu
 
       {/* Words */}
       <div className="text-[10px] italic leading-tight">
-        {numberToWords(bill.grandTotal)}
+        Rupees {numberToWords(bill.grandTotal)}
       </div>
 
       <div className="border-t border-dashed border-black my-2" />
 
       {/* Footer message */}
       <div className="text-center text-[10px] space-y-1">
-        <p className="font-semibold">{settings.invoiceFooterMessage || 'Thank you for your business!'}</p>
+        <p className="font-bold">Thank you for your business!</p>
+        <p className="text-[9px] uppercase font-bold">A.S. Praveen Traders</p>
+        <p className="text-[9px] italic">"Supporting Farmers • Growing Together"</p>
         <p className="text-[9px]">Operator: {bill.createdBy}</p>
-        <p className="text-[8px] text-gray-500">*** Software by Antigravity ***</p>
       </div>
     </div>
   );
 };
+
