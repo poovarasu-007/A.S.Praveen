@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased bg-[#F5F7F4] text-gray-900;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Print Specific Rules */
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt;
+  }
+
+  /* Hide all screen UI during print */
+  header,
+  footer,
+  aside,
+  nav,
+  button,
+  .print\\:hidden,
+  [role="dialog"] > div:first-child,
+  input,
+  select {
+    display: none !important;
+  }
+
+  /* Container adjustments */
+  #root,
+  .print-container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  /* Table rules */
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tfoot {
+    display: table-footer-group;
+  }
+
+  /* 80mm Thermal Receipt Print Setup */
+  .print-area-thermal {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  .print-area-thermal .thermal-bill {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    padding: 2mm !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* A4 Invoice Print Setup */
+  .print-area-a4 {
+    width: 210mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  .print-area-a4 .a4-invoice {
+    width: 210mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 5mm !important;
+    min-height: auto !important;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
