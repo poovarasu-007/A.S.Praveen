@@ -445,13 +445,11 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
         {/* Gradient Overlay for high contrast */}
         <div className="absolute inset-0 bg-gradient-to-r from-agri-950/95 via-emerald-900/90 to-agri-950/95" />
 
-        {/* Shimmer top stripe */}
+        {/* Top accent stripe */}
         <div
           className="absolute top-0 left-0 right-0 h-1"
           style={{
             background: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E,#F59E0B)',
-            backgroundSize: '300% auto',
-            animation: 'shimmer 4s linear infinite',
           }}
         />
 

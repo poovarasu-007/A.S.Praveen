@@ -139,8 +139,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
           className="absolute top-0 left-0 right-0 h-1"
           style={{
             background: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E,#F59E0B)',
-            backgroundSize: '300% auto',
-            animation: 'shimmer 4s linear infinite',
           }}
         />
 
@@ -148,7 +146,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center space-x-2 font-bold text-xs uppercase tracking-wider mb-2" style={{ color: '#FCD34D' }}>
-                <span className="w-2 h-2 rounded-full bg-yellow-400 animate-ping" />
+                <span className="w-2 h-2 rounded-full bg-yellow-400" />
                 <Sparkles className="w-4 h-4" />
                 <span>Agricultural Billing &amp; Farm Management System</span>
               </div>
@@ -241,62 +239,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         })}
       </div>
 
-      {/* ── 3. Agriculture Story Cards ──────────────────────────── */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shadow text-white"
-              style={{ background: 'linear-gradient(135deg,#22C55E,#3B82F6)' }}
-            >
-              🌱
-            </div>
-            <h2 className="text-base font-black text-gray-900 uppercase tracking-wider">
-              Agriculture Today • Farming &amp; Technology
-            </h2>
-          </div>
-          <span
-            className="text-xs font-semibold px-3 py-1 rounded-full"
-            style={{ background: '#f0fdf4', color: '#15803D', border: '1px solid #86EFAC' }}
-          >
-            A.S. Praveen Traders Heritage
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { src: '/images/farmer_bullock_ploughing.jpg', alt: 'Bullock ploughing', badge: '🌾 Traditional', badgeBg: '#F59E0B', title: 'Bullock Ploughing & Soil Prep', desc: 'Time-honored soil conditioning with certified heirloom seeds.' },
-            { src: '/images/tractor_spraying_crops.jpg',   alt: 'Tractor spraying',  badge: '🚜 Machinery',   badgeBg: '#22C55E', title: 'Tractor Boom Spraying', desc: 'High-capacity crop protection for large acreage farmland.' },
-            { src: '/images/drone_spraying_crops.jpg',     alt: 'Drone spraying',    badge: '🛸 Smart Agri',  badgeBg: '#06B6D4', title: 'Hexacopter Drone Mist', desc: 'Precision micro-foliar spraying and AI farm monitoring.' },
-            { src: '/images/farmers_rain_field.jpg',       alt: 'Farmers in rain',   badge: '🌧️ Monsoon',     badgeBg: '#84CC16', title: 'Paddy Planting & Water Mgmt', desc: 'Supporting farmers through every monsoon cycle.' },
-          ].map((card) => (
-            <div
-              key={card.src}
-              className="group relative rounded-2xl overflow-hidden shadow-md text-white h-52 flex flex-col justify-end transition-transform duration-300 hover:scale-[1.02]"
-              style={{ border: `2px solid ${card.badgeBg}44` }}
-            >
-              <img
-                src={card.src}
-                alt={card.alt}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-75"
-              />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top,rgba(5,46,22,0.95) 0%,rgba(5,46,22,0.3) 60%,transparent 100%)' }} />
-              <div className="relative z-10 p-4 space-y-1">
-                <span
-                  className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full inline-block text-gray-900"
-                  style={{ background: card.badgeBg }}
-                >
-                  {card.badge}
-                </span>
-                <h3 className="font-bold text-sm text-white leading-snug">{card.title}</h3>
-                <p className="text-[11px] text-emerald-200 line-clamp-2">{card.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 4. Payment Modes + Top Products ─────────────────────── */}
+      {/* ── 3. Payment Modes + Top Products ─────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Payment breakdown */}
         <div className="bg-white rounded-3xl p-5 shadow-md space-y-3" style={{ border: '2px solid #f0fdf4' }}>

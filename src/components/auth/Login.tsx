@@ -60,48 +60,22 @@ export const Login: React.FC = () => {
         }}
       />
 
-      {/* Floating coloured dots decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[
-          { top: '10%', left: '8%',  w: 80,  colour: '#F59E0B', delay: '0s' },
-          { top: '70%', left: '5%',  w: 50,  colour: '#22C55E', delay: '1s' },
-          { top: '20%', left: '85%', w: 60,  colour: '#EC4899', delay: '0.5s' },
-          { top: '75%', left: '80%', w: 90,  colour: '#3B82F6', delay: '1.5s' },
-          { top: '45%', left: '92%', w: 40,  colour: '#8B5CF6', delay: '2s' },
-        ].map((dot, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full opacity-20"
-            style={{
-              top: dot.top, left: dot.left,
-              width: dot.w, height: dot.w,
-              background: dot.colour,
-              filter: 'blur(30px)',
-              animation: `float 4s ease-in-out ${dot.delay} infinite`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Animated rainbow stripe at top */}
+      {/* Rainbow stripe at top */}
       <div
         className="absolute top-0 left-0 right-0 h-1.5"
         style={{
           background: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E,#F59E0B)',
-          backgroundSize: '300% auto',
-          animation: 'shimmer 3s linear infinite',
         }}
       />
 
       {/* Header */}
       <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
-        {/* Animated logo */}
+        {/* Logo */}
         <div
           className="inline-flex items-center justify-center w-20 h-20 rounded-3xl text-4xl mb-4 shadow-2xl"
           style={{
             background: 'linear-gradient(135deg,#F59E0B,#EF4444,#EC4899,#8B5CF6)',
             boxShadow: '0 0 0 3px #fff4, 0 0 40px #8B5CF660',
-            animation: 'float 4s ease-in-out infinite',
           }}
         >
           🌾
@@ -262,8 +236,6 @@ export const Login: React.FC = () => {
         className="absolute bottom-0 left-0 right-0 h-1.5"
         style={{
           background: 'linear-gradient(90deg,#22C55E,#3B82F6,#8B5CF6,#EC4899,#EF4444,#F59E0B)',
-          backgroundSize: '300% auto',
-          animation: 'shimmer 3s linear infinite',
         }}
       />
     </div>

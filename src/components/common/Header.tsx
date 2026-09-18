@@ -37,13 +37,11 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
         borderImage: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E) 1',
       }}
     >
-      {/* Colourful shimmer stripe */}
+      {/* Colourful stripe */}
       <div
         className="h-1 w-full"
         style={{
           background: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E,#F59E0B)',
-          backgroundSize: '300% auto',
-          animation: 'shimmer 4s linear infinite',
         }}
       />
 
@@ -126,13 +124,13 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             className={`flex items-center space-x-1.5 px-2 py-1 rounded-full text-[11px] font-semibold border ${
               isOnline
                 ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-200'
-                : 'bg-amber-500/20 border-amber-400/50 text-amber-200 animate-pulse'
+                : 'bg-amber-500/20 border-amber-400/50 text-amber-200'
             }`}
             title={isOnline ? 'System connected' : 'Offline – bills saved locally'}
           >
             {isOnline ? (
               <>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
                 <span className="hidden sm:inline">Online</span>
               </>
             ) : (
