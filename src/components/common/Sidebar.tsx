@@ -128,7 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-2xl shadow-md flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg,#F59E0B,#EF4444,#EC4899)' }}
+            style={{ background: 'linear-gradient(135deg,#F59E0B,#D97706)' }}
           >
             🌾
           </div>
@@ -236,10 +236,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <p className="text-[10px] text-emerald-100 font-medium leading-tight">
                 பாரம்பரிய விவசாயம் & வேளாண் இடுபொருட்கள்
               </p>
-              {/* Rainbow bar */}
+              {/* Gold-green accent bar */}
               <div
                 className="mt-1.5 h-1 rounded-full"
-                style={{ background: 'linear-gradient(90deg,#F59E0B,#EF4444,#8B5CF6,#3B82F6,#22C55E)' }}
+                style={{ background: 'linear-gradient(90deg,#F59E0B,#D97706,#16A34A,#22C55E)' }}
               />
             </div>
           </div>

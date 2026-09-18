@@ -11,7 +11,7 @@
   body {
     @apply antialiased text-gray-900;
     font-family: 'Inter', system-ui, sans-serif;
-    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 25%, #eff6ff 50%, #fdf4ff 75%, #fff7ed 100%);
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 40%, #fffbeb 70%, #f0fdf4 100%);
     background-attachment: fixed;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
@@ -23,16 +23,16 @@
 ::-webkit-scrollbar          { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track    { background: #e2e8f0; border-radius: 3px; }
 ::-webkit-scrollbar-thumb    {
-  background: linear-gradient(180deg, #22C55E, #3B82F6, #8B5CF6);
+  background: linear-gradient(180deg, #16A34A, #22C55E, #D97706);
   border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #16A34A, #2563EB, #7C3AED); }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #14532D, #16A34A, #B45309); }
 
 /* ============================================================
-   RAINBOW GRADIENT UTILITIES
+   GREEN & GOLD GRADIENT UTILITIES
    ============================================================ */
 .rainbow-text {
-  background: linear-gradient(90deg, #F59E0B, #EF4444, #EC4899, #8B5CF6, #3B82F6, #22C55E);
+  background: linear-gradient(90deg, #F59E0B, #D97706, #16A34A, #22C55E);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -48,7 +48,7 @@
   position: absolute;
   inset: -2px;
   border-radius: inherit;
-  background: linear-gradient(135deg, #F59E0B, #EF4444, #8B5CF6, #3B82F6, #22C55E, #F59E0B);
+  background: linear-gradient(135deg, #F59E0B, #D97706, #16A34A, #22C55E, #F59E0B);
   z-index: -1;
 }
 

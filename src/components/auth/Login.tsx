@@ -60,11 +60,11 @@ export const Login: React.FC = () => {
         }}
       />
 
-      {/* Rainbow stripe at top */}
+      {/* Gold stripe at top */}
       <div
         className="absolute top-0 left-0 right-0 h-1.5"
         style={{
-          background: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E,#F59E0B)',
+          background: 'linear-gradient(90deg,#F59E0B,#D97706,#16A34A,#22C55E,#F59E0B)',
         }}
       />
 
@@ -74,8 +74,8 @@ export const Login: React.FC = () => {
         <div
           className="inline-flex items-center justify-center w-20 h-20 rounded-3xl text-4xl mb-4 shadow-2xl"
           style={{
-            background: 'linear-gradient(135deg,#F59E0B,#EF4444,#EC4899,#8B5CF6)',
-            boxShadow: '0 0 0 3px #fff4, 0 0 40px #8B5CF660',
+            background: 'linear-gradient(135deg,#F59E0B,#D97706)',
+            boxShadow: '0 0 0 3px #fff4, 0 0 40px #D9770660',
           }}
         >
           🌾
@@ -105,15 +105,14 @@ export const Login: React.FC = () => {
           style={{
             background: 'rgba(255,255,255,0.97)',
             backdropFilter: 'blur(20px)',
-            border: '2px solid transparent',
-            borderImage: 'linear-gradient(135deg,#F59E0B,#EF4444,#8B5CF6,#3B82F6,#22C55E) 1',
+            border: '2px solid #F59E0B',
             boxShadow: '0 25px 60px rgba(0,0,0,0.35)',
           }}
         >
-          {/* Card top rainbow bar */}
+          {/* Card top gold-green bar */}
           <div
             className="h-1 rounded-full mb-5"
-            style={{ background: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E)' }}
+            style={{ background: 'linear-gradient(90deg,#F59E0B,#D97706,#16A34A,#22C55E)' }}
           />
 
           <div className="text-center mb-5">
@@ -181,8 +180,8 @@ export const Login: React.FC = () => {
               style={{
                 background: isLoading
                   ? '#9CA3AF'
-                  : 'linear-gradient(135deg,#16A34A,#1D4ED8,#7C3AED)',
-                boxShadow: isLoading ? 'none' : '0 8px 24px rgba(124,58,237,0.35)',
+                  : 'linear-gradient(135deg,#16A34A,#15803D,#D97706)',
+                boxShadow: isLoading ? 'none' : '0 8px 24px rgba(21,128,61,0.35)',
               }}
             >
               <span>{isLoading ? 'Verifying Terminal…' : 'Sign In to Counter'}</span>
@@ -231,11 +230,11 @@ export const Login: React.FC = () => {
         </p>
       </div>
 
-      {/* Bottom rainbow stripe */}
+      {/* Bottom gold-green stripe */}
       <div
         className="absolute bottom-0 left-0 right-0 h-1.5"
         style={{
-          background: 'linear-gradient(90deg,#22C55E,#3B82F6,#8B5CF6,#EC4899,#EF4444,#F59E0B)',
+          background: 'linear-gradient(90deg,#22C55E,#16A34A,#D97706,#F59E0B)',
         }}
       />
     </div>

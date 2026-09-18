@@ -132,13 +132,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Gradient overlay */}
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(135deg,rgba(5,46,22,0.80) 0%,rgba(30,27,75,0.70) 50%,rgba(76,29,149,0.70) 100%)' }}
+          style={{ background: 'linear-gradient(135deg,rgba(5,46,22,0.85) 0%,rgba(20,83,45,0.80) 50%,rgba(21,128,61,0.70) 100%)' }}
         />
-        {/* Rainbow top stripe */}
+        {/* Gold-green top stripe */}
         <div
           className="absolute top-0 left-0 right-0 h-1"
           style={{
-            background: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E,#F59E0B)',
+            background: 'linear-gradient(90deg,#F59E0B,#D97706,#16A34A,#22C55E,#F59E0B)',
           }}
         />
 

@@ -26,18 +26,14 @@ export default {
           cream:     '#FFFBEB',
           bg:        '#F0FDF4',
         },
-        // Vibrant accent palette used across the colourful theme
+        // Green & Gold accent palette
         brand: {
-          purple:  '#8B5CF6',
-          blue:    '#3B82F6',
-          cyan:    '#06B6D4',
-          teal:    '#14B8A6',
-          orange:  '#F97316',
-          rose:    '#F43F5E',
-          pink:    '#EC4899',
-          yellow:  '#EAB308',
-          lime:    '#84CC16',
-          indigo:  '#6366F1',
+          gold:       '#F59E0B',
+          goldDark:   '#D97706',
+          goldDeep:   '#B45309',
+          green:      '#22C55E',
+          greenDark:  '#16A34A',
+          greenDeep:  '#14532D',
         }
       },
       fontFamily: {
@@ -45,8 +41,8 @@ export default {
         mono: ['Courier New', 'Courier', 'monospace'],
       },
       backgroundImage: {
-        'rainbow-h': 'linear-gradient(135deg,#F59E0B,#EF4444,#8B5CF6,#3B82F6,#22C55E)',
-        'rainbow-sidebar': 'linear-gradient(180deg,#14532D 0%,#166534 30%,#1D4ED8 60%,#7C3AED 100%)',
+        'gold-green-h':    'linear-gradient(135deg,#F59E0B,#D97706,#16A34A,#14532D)',
+        'green-sidebar':   'linear-gradient(180deg,#14532D 0%,#166534 50%,#166534 100%)',
       },
       animation: {
         'shimmer': 'shimmer 2.5s linear infinite',

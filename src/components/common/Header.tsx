@@ -32,16 +32,15 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
     <header
       className="text-white shadow-xl select-none print:hidden"
       style={{
-        background: 'linear-gradient(135deg, #14532D 0%, #166534 18%, #1D4ED8 45%, #7C3AED 70%, #BE185D 100%)',
-        borderBottom: '3px solid transparent',
-        borderImage: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E) 1',
+        background: 'linear-gradient(135deg, #14532D 0%, #166534 40%, #15803D 100%)',
+        borderBottom: '3px solid #F59E0B',
       }}
     >
       {/* Colourful stripe */}
       <div
         className="h-1 w-full"
         style={{
-          background: 'linear-gradient(90deg,#F59E0B,#EF4444,#EC4899,#8B5CF6,#3B82F6,#22C55E,#F59E0B)',
+          background: 'linear-gradient(90deg,#F59E0B,#D97706,#16A34A,#22C55E,#F59E0B)',
         }}
       />
 
@@ -63,8 +62,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             <div
               className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shadow-lg"
               style={{
-                background: 'linear-gradient(135deg,#F59E0B,#EF4444,#EC4899)',
-                boxShadow: '0 0 0 2px #fff, 0 0 0 4px #8B5CF6',
+                background: 'linear-gradient(135deg,#F59E0B,#D97706)',
+                boxShadow: '0 0 0 2px #fff, 0 0 0 4px #16A34A',
               }}
             >
               🌾
