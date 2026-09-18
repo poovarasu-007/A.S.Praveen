@@ -471,7 +471,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                 {settings.tagline} • <span className="text-agri-gold font-bold">GSTIN: {settings.gstin}</span>
               </p>
               <p className="text-[11px] text-amber-200/90 font-serif italic mt-0.5 hidden sm:block">
-                "🌾 உழவே தலை • விவசாயம் நாட்டின் முதுகெலும்பு • விவசாயிகளின் நல்வாழ்வே நமது நோக்கம் 🌾"
+                "🌾 || Sri Chennammal Thunai || 🌾"
               </p>
             </div>
           </div>

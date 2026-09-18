@@ -231,7 +231,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="relative z-10 space-y-1">
               <div className="flex items-center space-x-1.5 font-black text-yellow-300 text-xs">
                 <span>🌾</span>
-                <span>உழவே தலை • Farm Billing</span>
+                <span>Sri Chennammal Thunai • Farm Billing</span>
               </div>
               <p className="text-[10px] text-emerald-100 font-medium leading-tight">
                 பாரம்பரிய விவசாயம் & வேளாண் இடுபொருட்கள்

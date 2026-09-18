@@ -26,7 +26,7 @@ export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNu
     >
       {/* Auspicious Village Agriculture Invocation */}
       <div className="text-center font-bold text-[10px] pb-1 text-black">
-        🌾 || ஸ்ரீ ராமஜெயம் || உழவே தலை || 🌾
+        🌾 || Sri Chennammal Thunai || 🌾
       </div>
 
       {/* Header */}

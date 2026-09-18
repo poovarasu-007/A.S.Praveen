@@ -39,7 +39,7 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
 
       {/* Auspicious Village Agriculture Invocation */}
       <div className="text-center font-serif text-[11px] font-black text-amber-900 tracking-wider mb-1">
-        🌾 || ஸ்ரீ ராமஜெயம் || உழவே தலை • விவசாயம் நாட்டின் முதுகெலும்பு || 🌾
+        🌾 || Sri Chennammal Thunai || 🌾
       </div>
 
       {/* 1. Centered Agricultural Business Header */}
