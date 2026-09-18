@@ -72,7 +72,7 @@ export type GstMode = 'CGST_SGST' | 'IGST' | 'EXEMPT';
 
 export interface Bill {
   id: string;
-  billNumber: string; // AST-YYYYMMDD-### or manual custom bill number
+  billNumber: string; // A.S.P-001 (global sequential) or manual custom bill number
   date: string; // YYYY-MM-DD
   time: string; // HH:mm:ss / 12-hr string
 

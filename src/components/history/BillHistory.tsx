@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db';
+import { recalculateGlobalSequence } from '../../db/sequence';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { formatCurrency } from '../../utils/currency';
@@ -97,7 +98,10 @@ export const BillHistory: React.FC = () => {
       // 1. Delete bill permanently from IndexedDB
       await db.bills.delete(billToDelete.id);
 
-      // 2. Add Audit Log
+      // 2. Recalculate global bill sequence so next auto number stays correct
+      await recalculateGlobalSequence();
+
+      // 3. Add Audit Log
       await db.auditLogs.add({
         id: `audit_${Date.now()}`,
         timestamp: new Date().toISOString(),

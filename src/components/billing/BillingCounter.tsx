@@ -80,27 +80,27 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
   const [landArea, setLandArea] = useState('');
   const customerInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch estimated next bill number on mount / date
+  // Fetch estimated next bill number on mount / after save
   useEffect(() => {
     async function previewBillNo() {
       try {
-        const seqRec = await db.dailySequences.get(new Date().toISOString().slice(0, 10).replace(/-/g, ''));
+        const seqRec = await db.dailySequences.get('GLOBAL');
         const next = (seqRec?.lastSeq || 0) + 1;
-        const dateKey = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        const autoNo = `AST-${dateKey}-${String(next).padStart(3, '0')}`;
+        const autoNo = `A.S.P-${String(next).padStart(3, '0')}`;
         setEstimatedBillNumber(autoNo);
         if (!isManualBillNo) {
           setManualBillNumber(autoNo);
         }
       } catch (e) {
-        setEstimatedBillNumber('AST-AUTO');
+        setEstimatedBillNumber('A.S.P-AUTO');
         if (!isManualBillNo) {
-          setManualBillNumber('AST-AUTO');
+          setManualBillNumber('A.S.P-AUTO');
         }
       }
     }
     previewBillNo();
   }, [savedBill]);
+
 
   // Keyboard shortcuts listener
   useEffect(() => {
@@ -513,7 +513,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                     setIsManualBillNo(true);
                     setManualBillNumber(e.target.value);
                   }}
-                  placeholder="e.g. AST-001 / 1024"
+                  placeholder="e.g. A.S.P-001 / 001"
                   className="w-full font-mono font-black text-yellow-300 text-base md:text-lg bg-black/60 border border-agri-gold/70 rounded-xl px-2.5 py-0.5 text-right focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none shadow-inner"
                   title="Type manual bill number or keep auto-generated sequence"
                 />
