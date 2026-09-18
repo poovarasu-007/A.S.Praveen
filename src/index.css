@@ -1,15 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   GLOBAL BASE
+   ============================================================ */
 @layer base {
   body {
-    @apply antialiased bg-[#F5F7F4] text-gray-900;
+    @apply antialiased text-gray-900;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 25%, #eff6ff 50%, #fdf4ff 75%, #fff7ed 100%);
+    background-attachment: fixed;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Print Specific Rules */
+/* ============================================================
+   COLOURFUL SCROLLBARS
+   ============================================================ */
+::-webkit-scrollbar          { width: 6px; height: 6px; }
+::-webkit-scrollbar-track    { background: #e2e8f0; border-radius: 3px; }
+::-webkit-scrollbar-thumb    {
+  background: linear-gradient(180deg, #22C55E, #3B82F6, #8B5CF6);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #16A34A, #2563EB, #7C3AED); }
+
+/* ============================================================
+   RAINBOW GRADIENT UTILITIES
+   ============================================================ */
+.rainbow-text {
+  background: linear-gradient(90deg, #F59E0B, #EF4444, #EC4899, #8B5CF6, #3B82F6, #22C55E);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+.rainbow-border {
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+.rainbow-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #F59E0B, #EF4444, #8B5CF6, #3B82F6, #22C55E, #F59E0B);
+  background-size: 300% 300%;
+  animation: shimmer 3s linear infinite;
+  z-index: -1;
+}
+
+/* ============================================================
+   GLASS-CARD UTILITY
+   ============================================================ */
+.glass-card {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* ============================================================
+   COLOURFUL KPI CARD ACCENTS
+   ============================================================ */
+.kpi-green  { --kpi-from:#22C55E; --kpi-to:#16A34A; --kpi-bg:#f0fdf4; }
+.kpi-blue   { --kpi-from:#3B82F6; --kpi-to:#2563EB; --kpi-bg:#eff6ff; }
+.kpi-purple { --kpi-from:#8B5CF6; --kpi-to:#7C3AED; --kpi-bg:#faf5ff; }
+.kpi-orange { --kpi-from:#F97316; --kpi-to:#EA580C; --kpi-bg:#fff7ed; }
+.kpi-rose   { --kpi-from:#F43F5E; --kpi-to:#E11D48; --kpi-bg:#fff1f2; }
+.kpi-amber  { --kpi-from:#F59E0B; --kpi-to:#D97706; --kpi-bg:#fffbeb; }
+
+.kpi-card {
+  background: var(--kpi-bg);
+  border-top: 4px solid var(--kpi-from);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+}
+.kpi-icon {
+  background: linear-gradient(135deg, var(--kpi-from), var(--kpi-to));
+  color: #fff;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   SIDEBAR NAV COLOURS (per item)
+   ============================================================ */
+.nav-active-dashboard { background:linear-gradient(90deg,#bbf7d0,#d1fae5); border-left:4px solid #16A34A; color:#14532D; }
+.nav-active-billing   { background:linear-gradient(90deg,#fef9c3,#fef3c7); border-left:4px solid #D97706; color:#78350F; }
+.nav-active-products  { background:linear-gradient(90deg,#dbeafe,#eff6ff); border-left:4px solid #2563EB; color:#1e3a8a; }
+.nav-active-customers { background:linear-gradient(90deg,#ede9fe,#f5f3ff); border-left:4px solid #7C3AED; color:#4C1D95; }
+.nav-active-history   { background:linear-gradient(90deg,#fce7f3,#fdf2f8); border-left:4px solid #BE185D; color:#831843; }
+.nav-active-reports   { background:linear-gradient(90deg,#cffafe,#ecfeff); border-left:4px solid #0891B2; color:#164e63; }
+.nav-active-backup    { background:linear-gradient(90deg,#ffedd5,#fff7ed); border-left:4px solid #EA580C; color:#7c2d12; }
+.nav-active-users     { background:linear-gradient(90deg,#dcfce7,#f0fdf4); border-left:4px solid #15803D; color:#14532D; }
+.nav-active-settings  { background:linear-gradient(90deg,#f1f5f9,#f8fafc); border-left:4px solid #475569; color:#0f172a; }
+.nav-active-audit     { background:linear-gradient(90deg,#fee2e2,#fff1f2); border-left:4px solid #DC2626; color:#7f1d1d; }
+
+/* ============================================================
+   PRINT RULES (unchanged - keep all print functionality)
+   ============================================================ */
 @media print {
   html, body {
     margin: 0 !important;
@@ -19,20 +125,18 @@
     font-size: 12pt;
   }
 
-  /* Hide all screen UI during print */
   header,
   footer,
   aside,
   nav,
   button,
-  .print\\:hidden,
+  .print\:hidden,
   [role="dialog"] > div:first-child,
   input,
   select {
     display: none !important;
   }
 
-  /* Container adjustments */
   #root,
   .print-container {
     width: 100% !important;
@@ -41,80 +145,37 @@
     background: transparent !important;
   }
 
-  /* Table rules */
-  table {
-    page-break-inside: auto;
-  }
-  tr {
-    page-break-inside: avoid;
-    page-break-after: auto;
-  }
-  thead {
-    display: table-header-group;
-  }
-  tfoot {
-    display: table-footer-group;
-  }
+  table          { page-break-inside: auto; }
+  tr             { page-break-inside: avoid; page-break-after: auto; }
+  thead          { display: table-header-group; }
+  tfoot          { display: table-footer-group; }
 
-  /* 80mm Thermal Receipt Print Setup */
-  .print-area-thermal {
-    width: 80mm !important;
-    max-width: 80mm !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-  }
+  /* 80mm Thermal */
+  .print-area-thermal              { width: 80mm !important; max-width: 80mm !important; margin: 0 auto !important; padding: 0 !important; }
+  .print-area-thermal .thermal-bill { width: 80mm !important; max-width: 80mm !important; padding: 2mm !important; border: none !important; box-shadow: none !important; }
 
-  .print-area-thermal .thermal-bill {
-    width: 80mm !important;
-    max-width: 80mm !important;
-    padding: 2mm !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
+  /* A4 Invoice */
+  .print-area-a4           { width: 210mm !important; margin: 0 auto !important; padding: 0 !important; }
+  .print-area-a4 .a4-invoice { width: 210mm !important; border: none !important; box-shadow: none !important; padding: 5mm !important; min-height: auto !important; }
 
-  /* A4 Invoice Print Setup */
-  .print-area-a4 {
-    width: 210mm !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-  }
-
-  .print-area-a4 .a4-invoice {
-    width: 210mm !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 5mm !important;
-    min-height: auto !important;
-  }
-
-  /* A5 Invoice Print Setup */
-  .print-area-a5 {
-    width: 148mm !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-  }
-
-  .print-area-a5 .a4-invoice {
-    width: 148mm !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 3mm !important;
-    min-height: auto !important;
-  }
+  /* A5 Invoice */
+  .print-area-a5           { width: 148mm !important; margin: 0 auto !important; padding: 0 !important; }
+  .print-area-a5 .a4-invoice { width: 148mm !important; border: none !important; box-shadow: none !important; padding: 3mm !important; min-height: auto !important; }
 }
 
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
 }
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-6px); }
 }
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+@keyframes popIn {
+  0%   { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
+.animate-pop-in { animation: popIn 0.3s ease forwards; }
