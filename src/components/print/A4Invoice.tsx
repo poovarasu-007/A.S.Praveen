@@ -8,10 +8,12 @@ interface A4InvoiceProps {
   settings: BusinessSettings;
   billNumber?: string;
   isA5?: boolean;
+  isTraditional?: boolean;
 }
 
-export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber, isA5 }) => {
+export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber, isA5, isTraditional }) => {
   const displayBillNumber = billNumber || bill.billNumber;
+  const isTraditionalFormat = isTraditional ?? (bill.billFormat !== 'standard');
 
   // Determine Payment Status
   const isCredit = bill.paymentMethod === 'Credit';
@@ -23,48 +25,59 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
 
   return (
     <div
-      className={`a4-invoice bg-white text-gray-900 mx-auto shadow-lg border border-gray-300 print:border-none print:shadow-none print:m-0 print:p-4 select-text font-sans text-xs ${
+      className={`a4-invoice bg-white text-gray-900 mx-auto shadow-lg border-2 border-agri-900/40 print:border-none print:shadow-none print:m-0 print:p-4 select-text font-sans text-xs relative overflow-hidden ${
         isA5
           ? 'w-[148mm] min-h-[210mm] p-4 text-[10px]'
           : 'w-[210mm] min-h-[297mm] p-8 text-xs'
       }`}
     >
+      {/* Subtle Agricultural Bullock Ploughing Background Watermark */}
+      <div
+        className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-[0.05] pointer-events-none"
+        style={{ backgroundImage: "url('/images/farmer_bullock_ploughing.jpg')" }}
+      />
+
+      {/* Auspicious Village Agriculture Invocation */}
+      <div className="text-center font-serif text-[11px] font-black text-amber-900 tracking-wider mb-1">
+        🌾 || ஸ்ரீ ராமஜெயம் || உழவே தலை • விவசாயம் நாட்டின் முதுகெலும்பு || 🌾
+      </div>
+
       {/* 1. Centered Agricultural Business Header */}
-      <div className="border-b-2 border-agri-800 pb-3 mb-3 text-center">
+      <div className="border-b-2 border-agri-800 pb-3 mb-3 text-center relative z-10">
         <div className="flex items-center justify-center space-x-2 mb-0.5">
           <span className="text-xl md:text-2xl">🌱</span>
           <h1 className="text-xl md:text-2xl font-black text-agri-900 tracking-tight font-serif uppercase">
             {settings.businessName || 'A.S. PRAVEEN TRADERS'}
           </h1>
-          <span className="text-xl md:text-2xl">🌱</span>
+          <span className="text-xl md:text-2xl">🌾</span>
         </div>
         <p className="text-xs font-bold text-agri-700 tracking-wide uppercase">
-          {settings.tagline || 'Agricultural Products & Farm Inputs'}
+          {settings.tagline || 'Agricultural Products & Farm Inputs'} • உழவர் சேவை மையம்
         </p>
         <p className="text-[11px] text-gray-800 mt-1 font-medium leading-tight max-w-xl mx-auto">
           {settings.completeAddress || 'NO : 2428, SATHYA NAGAR MAIN STREET, Thanipadi, Tiruvannamalai District, Tamil Nadu - 606708'}
         </p>
         <div className="mt-1.5 flex flex-wrap justify-center gap-x-5 text-[11px] font-bold text-gray-900">
           <span>GSTIN: <strong className="text-agri-950 font-mono">{settings.gstin || '33HQYPP5735G1Z3'}</strong></span>
-          <span>Phone: <strong className="text-agri-950 font-mono">{settings.mobile1 || '8825633575'} / {settings.mobile2 || '9443990403'}</strong></span>
+          <span>தொடர்புக்கு / Phone: <strong className="text-agri-950 font-mono">{settings.mobile1 || '8825633575'} / {settings.mobile2 || '9443990403'}</strong></span>
         </div>
 
         {/* 2. Invoice / Bill Title Bar */}
         <div className="mt-3 pt-2 border-t border-gray-200 flex items-center justify-between">
           <div className="inline-block bg-agri-800 text-white font-black px-4 py-1 rounded uppercase tracking-wider text-xs shadow-sm">
-            INVOICE / BILL
+            {isTraditionalFormat ? 'விவசாயி விற்பனை ரசீது (FARMER INVOICE)' : 'INVOICE / BILL'}
           </div>
           <div className="text-[11px] space-y-0.5 text-right font-medium">
             <div>
-              <span className="text-gray-500">Bill No:</span>{' '}
+              <span className="text-gray-500">Bill No / ரசீது எண்:</span>{' '}
               <strong className="font-mono text-xs text-agri-950 font-black">{displayBillNumber}</strong>
             </div>
             <div>
-              <span className="text-gray-500">Date:</span>{' '}
+              <span className="text-gray-500">Date / தேதி:</span>{' '}
               <strong className="text-gray-900">{formatDate(bill.date)}</strong>
             </div>
             <div>
-              <span className="text-gray-500">Time:</span>{' '}
+              <span className="text-gray-500">Time / நேரம்:</span>{' '}
               <strong className="text-gray-900 font-mono">{formatTime(bill.time)}</strong>
             </div>
           </div>
@@ -72,27 +85,38 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
       </div>
 
       {/* 3. Customer & Payment Details Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-3 border border-gray-300 rounded-lg p-3 bg-agri-50/25">
+      <div className="grid grid-cols-2 gap-3 mb-3 border-2 border-agri-800/40 rounded-lg p-3 bg-agri-50/30 relative z-10">
         <div>
-          <div className="text-[10px] font-black uppercase text-agri-800 tracking-wider mb-1">
-            Customer Details:
+          <div className="text-[10px] font-black uppercase text-agri-800 tracking-wider mb-1 flex items-center space-x-1">
+            <span>👨‍🌾</span>
+            <span>{isTraditionalFormat ? 'விவசாயி விவரம் (Farmer Details):' : 'Customer Details:'}</span>
           </div>
           <div className="text-sm font-bold text-gray-950 uppercase">
             {bill.customer.name}
           </div>
           {bill.customer.mobile && (
             <div className="text-[11px] text-gray-700 mt-0.5">
-              <span className="text-gray-500">Mobile:</span> <strong className="font-mono">{bill.customer.mobile}</strong>
+              <span className="text-gray-500">அலைபேசி (Mobile):</span> <strong className="font-mono">{bill.customer.mobile}</strong>
             </div>
           )}
           {bill.customer.address && (
             <div className="text-[11px] text-gray-700 mt-0.5">
-              <span className="text-gray-500">Village / Address:</span> {bill.customer.address}
+              <span className="text-gray-500">கிராமம் / ஊர் (Village):</span> <strong className="text-agri-950">{bill.customer.address}</strong>
+            </div>
+          )}
+          {bill.customer.crop && (
+            <div className="text-[11px] text-gray-700 mt-0.5">
+              <span className="text-gray-500">சாகுபடி பயிர் (Crop):</span> <strong className="text-emerald-800">{bill.customer.crop}</strong>
+            </div>
+          )}
+          {bill.customer.landArea && (
+            <div className="text-[11px] text-gray-700 mt-0.5">
+              <span className="text-gray-500">நிலப் பரப்பு (Land Area):</span> <strong>{bill.customer.landArea}</strong>
             </div>
           )}
           {bill.customer.gstin && (
             <div className="text-[11px] text-gray-700 mt-0.5">
-              <span className="text-gray-500">GSTIN:</span> <strong className="font-mono">{bill.customer.gstin}</strong>
+              <span className="text-gray-500">GSTIN / ID:</span> <strong className="font-mono">{bill.customer.gstin}</strong>
             </div>
           )}
         </div>
@@ -100,7 +124,7 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
         <div className="text-right flex flex-col justify-between">
           <div>
             <span className="text-[10px] font-black uppercase text-agri-800 tracking-wider">
-              Payment Status & Method:
+              செலுத்தும் முறை (Payment Method):
             </span>
             <div className="mt-1 flex items-center justify-end space-x-2 text-[11px]">
               <span className="text-gray-500">Method:</span>
@@ -126,7 +150,7 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
             )}
           </div>
           <div className="text-[10px] text-gray-500">
-            Created By: <span className="font-semibold text-gray-800">{bill.createdBy}</span>
+            பில் பதிவு செய்தவர்: <span className="font-semibold text-gray-800">{bill.createdBy}</span>
           </div>
         </div>
       </div>
@@ -249,27 +273,29 @@ export const A4Invoice: React.FC<A4InvoiceProps> = ({ bill, settings, billNumber
         </div>
       </div>
 
-      {/* 6. Footer & Signature */}
-      <div className="pt-4 border-t border-gray-300 grid grid-cols-2 gap-4 items-end">
+      {/* 6. Footer & Signatures */}
+      <div className="pt-4 border-t-2 border-agri-800/40 grid grid-cols-2 gap-4 items-end relative z-10">
         <div>
-          <p className="text-[11px] font-bold text-agri-900">
-            Thank you for your business!
+          <p className="text-[11px] font-bold text-agri-950 font-serif">
+            "🌾 உழவர் செழிக்க நாடு செழிக்கும் • நன்றி, மீண்டும் வருக! 🌾"
           </p>
-          <p className="text-[10px] font-bold text-agri-700 uppercase">
-            A.S. Praveen Traders • Agricultural Products & Farm Inputs
+          <p className="text-[10px] font-bold text-agri-800 uppercase mt-0.5">
+            A.S. Praveen Traders • உழவர் சேவை மையம்
           </p>
-          <p className="text-[10px] text-amber-900 font-serif italic mt-0.5">
-            "Supporting Farmers • Growing Together"
-          </p>
+          <div className="h-10 flex items-end">
+            <span className="border-t border-gray-400 pt-0.5 text-[10px] text-gray-700 font-bold px-3">
+              விவசாயி கையொப்பம் (Farmer's Signature)
+            </span>
+          </div>
         </div>
 
         <div className="text-right">
           <p className="text-[11px] font-bold text-gray-900 uppercase">
             For A.S. PRAVEEN TRADERS
           </p>
-          <div className="h-12 flex items-end justify-end">
+          <div className="h-10 flex items-end justify-end">
             <span className="border-t border-gray-400 pt-0.5 text-[10px] text-gray-700 font-bold px-3">
-              Authorized Signature
+              உரிமையாளர் / அங்கீகரிக்கப்பட்ட கையொப்பம் (Authorized Signature)
             </span>
           </div>
         </div>

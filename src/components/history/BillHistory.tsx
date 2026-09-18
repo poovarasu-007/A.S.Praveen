@@ -123,24 +123,35 @@ export const BillHistory: React.FC = () => {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-8">
-      {/* Header Banner */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-agri-700 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-            <History className="w-5 h-5 text-agri-gold" />
+      {/* Header Banner with Agricultural Photo */}
+      <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-agri-gold/50 text-white min-h-[110px] p-5 flex flex-wrap items-center justify-between gap-3">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30 scale-105"
+          style={{ backgroundImage: "url('/images/farmer_bullock_ploughing.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-agri-950/95 via-emerald-950/90 to-agri-950/95" />
+
+        <div className="relative z-10 flex items-center space-x-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-agri-gold to-yellow-500 text-agri-950 flex items-center justify-center font-bold text-xl shadow-lg border border-white/40">
+            📜
           </div>
           <div>
-            <h2 className="text-lg font-black text-agri-900 tracking-tight">
-              BILL HISTORY & ARCHIVE
-            </h2>
-            <p className="text-xs text-gray-500">
-              Permanent customer sales records • Bills never expire or auto-delete
+            <div className="flex items-center space-x-2 flex-wrap">
+              <h2 className="text-xl font-black text-white tracking-tight font-serif uppercase">
+                விற்பனை ரசீது வரலாறு (BILL HISTORY &amp; ARCHIVE)
+              </h2>
+              <span className="bg-yellow-400 text-agri-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                {bills.length} Bills
+              </span>
+            </div>
+            <p className="text-xs text-emerald-200 mt-0.5">
+              விவசாயிகளின் நிரந்தர விற்பனை பதிவேடு • ரசீதுகள் பாதுகாப்பாக சேமிக்கப்பட்டுள்ளன
             </p>
           </div>
         </div>
 
-        <div className="text-xs text-gray-600 bg-agri-50 px-3 py-1.5 rounded-xl border border-agri-200 font-medium">
-          Total Bills Stored: <strong className="text-agri-900 font-mono text-sm">{bills.length}</strong>
+        <div className="relative z-10 text-xs text-yellow-200 bg-black/40 px-3.5 py-2 rounded-2xl border border-yellow-400/40 font-bold">
+          மொத்த ரசீதுகள்: <strong className="text-yellow-300 font-mono text-sm">{bills.length}</strong>
         </div>
       </div>
 

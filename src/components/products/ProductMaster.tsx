@@ -162,18 +162,29 @@ export const ProductMaster: React.FC = () => {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-8">
-      {/* Header Banner */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-agri-700 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-            <Boxes className="w-5 h-5 text-agri-gold" />
+      {/* Header Banner with Agricultural Photo */}
+      <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-agri-gold/50 text-white min-h-[110px] p-5 flex flex-wrap items-center justify-between gap-3">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30 scale-105"
+          style={{ backgroundImage: "url('/images/tractor_spraying_crops.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-agri-950/95 via-emerald-950/90 to-agri-950/95" />
+
+        <div className="relative z-10 flex items-center space-x-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-agri-gold to-yellow-500 text-agri-950 flex items-center justify-center font-bold text-xl shadow-lg border border-white/40">
+            🌾
           </div>
           <div>
-            <h2 className="text-lg font-black text-agri-900 tracking-tight">
-              PRODUCT MASTER
-            </h2>
-            <p className="text-xs text-gray-500">
-              Manage agricultural inputs, fixed counter pricing, and GST tax brackets
+            <div className="flex items-center space-x-2 flex-wrap">
+              <h2 className="text-xl font-black text-white tracking-tight font-serif">
+                வேளாண் பொருட்கள் பட்டியல் (PRODUCT MASTER)
+              </h2>
+              <span className="bg-yellow-400 text-agri-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                {products.length} Items
+              </span>
+            </div>
+            <p className="text-xs text-emerald-200 mt-0.5">
+              பாரம்பரிய நாட்டு விதைகள், உரங்கள், பூச்சிக்கொல்லிகள் & நவீன வேளாண் கருவிகள்
             </p>
           </div>
         </div>

@@ -24,13 +24,18 @@ export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNu
       className="thermal-bill font-mono text-[12px] leading-tight text-black bg-white p-3 mx-auto w-[80mm] max-w-[80mm] border border-dashed border-gray-300 shadow-sm print:border-none print:p-0 print:shadow-none print:w-[80mm] select-text"
       style={{ fontFamily: "'Courier New', Courier, monospace" }}
     >
+      {/* Auspicious Village Agriculture Invocation */}
+      <div className="text-center font-bold text-[10px] pb-1 text-black">
+        🌾 || ஸ்ரீ ராமஜெயம் || உழவே தலை || 🌾
+      </div>
+
       {/* Header */}
       <div className="text-center pb-2">
         <div className="text-base">🌱 🌾 🌱</div>
         <h1 className="text-[16px] font-black tracking-tight uppercase">
           {settings.businessName || 'A.S. PRAVEEN TRADERS'}
         </h1>
-        <p className="text-[11px] font-bold uppercase">{settings.tagline || 'Agricultural Products & Farm Inputs'}</p>
+        <p className="text-[11px] font-bold uppercase">{settings.tagline || 'Agricultural Products & Farm Inputs'} • உழவர் மையம்</p>
         <p className="text-[10px] mt-0.5">NO : 2428, SATHYA NAGAR MAIN ST, THANIPADI, TIRUVANNAMALAI - 606708</p>
         <p className="text-[11px] font-bold mt-1">GSTIN: {settings.gstin || '33HQYPP5735G1Z3'}</p>
         <p className="text-[10px] font-bold">
@@ -58,13 +63,15 @@ export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNu
 
       <div className="border-t border-dashed border-black my-1.5" />
 
-      {/* Customer Info */}
-      <div className="text-[11px]">
+      {/* Customer / Farmer Info */}
+      <div className="text-[11px] space-y-0.5">
         <div className="font-bold">
-          Customer: <span className="uppercase">{bill.customer.name}</span>
+          விவசாயி / Cust: <span className="uppercase">{bill.customer.name}</span>
         </div>
-        {bill.customer.mobile && <div>Mob: {bill.customer.mobile}</div>}
-        {bill.customer.address && <div>Addr: {bill.customer.address}</div>}
+        {bill.customer.mobile && <div>அலைபேசி / Mob: {bill.customer.mobile}</div>}
+        {bill.customer.address && <div>கிராமம் / Village: {bill.customer.address}</div>}
+        {bill.customer.crop && <div>பயிர் / Crop: {bill.customer.crop}</div>}
+        {bill.customer.landArea && <div>நிலப் பரப்பு: {bill.customer.landArea}</div>}
         {bill.customer.gstin && <div>GSTIN: {bill.customer.gstin}</div>}
       </div>
 
@@ -160,12 +167,16 @@ export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNu
 
       <div className="border-t border-dashed border-black my-2" />
 
-      {/* Footer message */}
+      {/* Traditional Village Footer message */}
       <div className="text-center text-[10px] space-y-1">
-        <p className="font-bold">Thank you for your business!</p>
-        <p className="text-[9px] uppercase font-bold">A.S. Praveen Traders</p>
-        <p className="text-[9px] italic">"Supporting Farmers • Growing Together"</p>
-        <p className="text-[9px]">Operator: {bill.createdBy}</p>
+        <p className="font-bold">🌾 உழவர் செழிக்க நாடு செழிக்கும்! 🌾</p>
+        <p className="text-[9px] uppercase font-bold">A.S. Praveen Traders • உழவர் மையம்</p>
+        <p className="text-[9px] italic">விவசாயம் காப்போம்! நன்றி, மீண்டும் வருக!</p>
+        <div className="pt-2 flex justify-between text-[8px] border-t border-dotted border-gray-400 mt-2">
+          <span>விவசாயி கையொப்பம்</span>
+          <span>உரிமையாளர் கையொப்பம்</span>
+        </div>
+        <p className="text-[8px] text-gray-500 pt-1">Operator: {bill.createdBy}</p>
       </div>
     </div>
   );

@@ -220,24 +220,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </nav>
 
-        {/* Sidebar footer */}
+        {/* Sidebar footer with Traditional Agriculture Photo Card */}
         <div className="p-3 border-t border-gray-100">
-          <div
-            className="p-2.5 rounded-xl text-xs text-white shadow-sm"
-            style={{ background: 'linear-gradient(135deg,#14532D,#1D4ED8,#7C3AED)' }}
-          >
-            <div className="flex items-center space-x-1.5 font-bold">
-              <span>🌾</span>
-              <span>Farm Counter v1.0</span>
-            </div>
-            <p className="text-[10px] text-white/60 mt-0.5">
-              Offline Persistent Storage (IndexedDB)
-            </p>
-            {/* Rainbow bar */}
+          <div className="relative rounded-2xl overflow-hidden shadow-md text-white border border-amber-400/40 p-3 flex flex-col justify-end min-h-[95px]">
             <div
-              className="mt-2 h-1 rounded-full"
-              style={{ background: 'linear-gradient(90deg,#F59E0B,#EF4444,#8B5CF6,#3B82F6,#22C55E)' }}
+              className="absolute inset-0 bg-cover bg-center opacity-40 scale-105"
+              style={{ backgroundImage: "url('/images/farmer_bullock_ploughing.jpg')" }}
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-agri-950 via-agri-950/80 to-transparent" />
+            <div className="relative z-10 space-y-1">
+              <div className="flex items-center space-x-1.5 font-black text-yellow-300 text-xs">
+                <span>🌾</span>
+                <span>உழவே தலை • Farm Billing</span>
+              </div>
+              <p className="text-[10px] text-emerald-100 font-medium leading-tight">
+                பாரம்பரிய விவசாயம் & வேளாண் இடுபொருட்கள்
+              </p>
+              {/* Rainbow bar */}
+              <div
+                className="mt-1.5 h-1 rounded-full"
+                style={{ background: 'linear-gradient(90deg,#F59E0B,#EF4444,#8B5CF6,#3B82F6,#22C55E)' }}
+              />
+            </div>
           </div>
         </div>
       </aside>

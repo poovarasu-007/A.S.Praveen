@@ -56,24 +56,35 @@ export const CustomerList: React.FC = () => {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-8">
-      {/* Header Banner */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-agri-700 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-            <Users className="w-5 h-5 text-agri-gold" />
+      {/* Header Banner with Agricultural Photo */}
+      <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-agri-gold/50 text-white min-h-[110px] p-5 flex flex-wrap items-center justify-between gap-3">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30 scale-105"
+          style={{ backgroundImage: "url('/images/farmers_rain_field.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-agri-950/95 via-emerald-950/90 to-agri-950/95" />
+
+        <div className="relative z-10 flex items-center space-x-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-agri-gold to-yellow-500 text-agri-950 flex items-center justify-center font-bold text-xl shadow-lg border border-white/40">
+            👨‍🌾
           </div>
           <div>
-            <h2 className="text-lg font-black text-agri-900 tracking-tight uppercase">
-              CUSTOMER & FARMER DIRECTORY
-            </h2>
-            <p className="text-xs text-gray-500">
-              Auto-saved farmers, traders, and regular buyer profiles • Click any customer to view billing history
+            <div className="flex items-center space-x-2 flex-wrap">
+              <h2 className="text-xl font-black text-white tracking-tight font-serif uppercase">
+                விவசாயிகள் &amp; வாடிக்கையாளர்கள் (FARMER DIRECTORY)
+              </h2>
+              <span className="bg-yellow-400 text-agri-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                {customers.length} Farmers
+              </span>
+            </div>
+            <p className="text-xs text-emerald-200 mt-0.5">
+              தானிப்பாடி மற்றும் சுற்றுவட்டார கிராமத்து விவசாயிகள் மற்றும் வாடிக்கையாளர் பட்டியல்
             </p>
           </div>
         </div>
 
-        <div className="text-xs text-gray-600 bg-agri-50 px-3.5 py-1.5 rounded-xl border border-agri-200 font-medium">
-          Total Customers: <strong className="text-agri-900 font-mono text-sm">{customers.length}</strong>
+        <div className="relative z-10 text-xs text-yellow-200 bg-black/40 px-3.5 py-2 rounded-2xl border border-yellow-400/40 font-bold">
+          மொத்த விவசாயிகள்: <strong className="text-yellow-300 font-mono text-sm">{customers.length}</strong>
         </div>
       </div>
 
@@ -85,7 +96,7 @@ export const CustomerList: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search customers by farmer name, mobile number, or village/town..."
+            placeholder="Search customers by farmer name, mobile number, village/town, or crop..."
             className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-agri-600 outline-none"
           />
         </div>
@@ -98,7 +109,7 @@ export const CustomerList: React.FC = () => {
             <thead className="bg-agri-900 text-white text-xs uppercase tracking-wider">
               <tr>
                 <th className="py-3 px-3 text-center w-12">S.No</th>
-                <th className="py-3 px-4">Customer Name</th>
+                <th className="py-3 px-4">Customer / Farmer Name</th>
                 <th className="py-3 px-4">Contact & Mobile</th>
                 <th className="py-3 px-4">Address / Village</th>
                 <th className="py-3 px-3 text-center">Total Bills</th>
@@ -126,11 +137,16 @@ export const CustomerList: React.FC = () => {
                       {idx + 1}
                     </td>
                     <td className="py-3 px-4">
-                      <div className="font-bold text-gray-900 flex items-center space-x-1.5">
+                      <div className="font-bold text-gray-900 flex items-center space-x-1.5 flex-wrap">
                         <span>{c.name}</span>
-                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                          Farmer
+                        <span className="text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded-full border border-emerald-300 font-bold">
+                          🌾 Farmer
                         </span>
+                        {c.crop && (
+                          <span className="text-[10px] text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded-full border border-amber-300 font-bold">
+                            {c.crop}
+                          </span>
+                        )}
                       </div>
                       {c.gstin && (
                         <div className="text-[11px] text-gray-500 font-mono">GSTIN: {c.gstin}</div>

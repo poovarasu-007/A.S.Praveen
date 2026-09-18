@@ -17,8 +17,8 @@ export const PrintModal: React.FC<PrintModalProps> = ({
   settings,
   onClose,
 }) => {
-  const [format, setFormat] = useState<'80mm' | 'A4' | 'A5'>(
-    (settings.defaultPrintFormat as any) || 'A4'
+  const [format, setFormat] = useState<'village' | 'A4' | 'A5' | '80mm'>(
+    bill?.billFormat === 'traditional' ? 'village' : ((settings.defaultPrintFormat as any) || 'village')
   );
 
   // Keyboard shortcut Ctrl+P while modal is open to trigger window.print
@@ -66,13 +66,23 @@ export const PrintModal: React.FC<PrintModalProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-emerald-200 hidden sm:block">
-              Clean white GST invoice print preview • Press <strong>Ctrl + P</strong> to print
+              Traditional Village Agri bill & GST invoice preview • Press <strong>Ctrl + P</strong> to print
             </p>
           </div>
         </div>
 
-        {/* Paper Format Switcher (80mm, A4, A5) */}
-        <div className="flex items-center space-x-1.5 bg-black/50 p-1 rounded-2xl border border-white/20">
+        {/* Paper Format Switcher (Village, A4, A5, 80mm) */}
+        <div className="flex items-center space-x-1 bg-black/50 p-1 rounded-2xl border border-white/20">
+          <button
+            onClick={() => setFormat('village')}
+            className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+              format === 'village'
+                ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-agri-950 shadow-md scale-[1.02]'
+                : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            <span>🌾 கிராம ரசீது (Village)</span>
+          </button>
           <button
             onClick={() => setFormat('A4')}
             className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
@@ -82,7 +92,7 @@ export const PrintModal: React.FC<PrintModalProps> = ({
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>A4 Full Page</span>
+            <span>A4 Standard</span>
           </button>
           <button
             onClick={() => setFormat('A5')}
@@ -136,7 +146,7 @@ export const PrintModal: React.FC<PrintModalProps> = ({
             </div>
           ) : (
             <div className={format === 'A5' ? 'print-area-a5' : 'print-area-a4'}>
-              <A4Invoice bill={bill} settings={settings} isA5={format === 'A5'} />
+              <A4Invoice bill={bill} settings={settings} isA5={format === 'A5'} isTraditional={format === 'village'} />
             </div>
           )}
         </div>
