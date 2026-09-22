@@ -47,14 +47,36 @@ export const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F5F7F4] flex flex-col items-center justify-center p-4">
-        <div className="w-16 h-16 rounded-2xl bg-agri-700 text-white text-3xl flex items-center justify-center animate-bounce shadow-xl">
-          🌾
+      <div className="min-h-screen arch-bg flex flex-col items-center justify-center p-4 relative">
+        {/* Subtle arch radial glow */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(31,73,89,0.35) 0%, transparent 65%)' }}
+        />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center animate-float"
+            style={{
+              background: 'linear-gradient(135deg, #1F4959 0%, #2d6275 100%)',
+              border: '1px solid rgba(92,124,137,0.4)',
+              boxShadow: '0 8px 32px rgba(31,73,89,0.5)',
+            }}
+          >
+            <span className="text-2xl">🌾</span>
+          </div>
+          <h2
+            className="font-display font-light text-white text-xl tracking-widest"
+            style={{ letterSpacing: '0.15em' }}
+          >
+            A.S. PRAVEEN TRADERS
+          </h2>
+          <div className="flex items-center gap-2" style={{ color: 'rgba(92,124,137,0.65)' }}>
+            <div className="spinner w-4 h-4" />
+            <span className="text-xs tracking-widest" style={{ letterSpacing: '0.1em' }}>
+              Loading billing database…
+            </span>
+          </div>
         </div>
-        <h2 className="mt-4 font-black text-agri-950 font-serif text-xl tracking-tight">
-          A.S.PRAVEEN TRADERS
-        </h2>
-        <p className="text-xs text-gray-500 font-mono mt-1">Loading Local Billing Database...</p>
       </div>
     );
   }
@@ -65,7 +87,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F5F7F4] select-none">
+    <div className="min-h-screen flex flex-col" style={{ background: '#011425' }} data-select="none">
       {/* Top Header */}
       <Header onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} />
 
@@ -83,7 +105,7 @@ export const App: React.FC = () => {
         />
 
         {/* Dynamic Content View */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 print:p-0 print:overflow-visible">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 print:p-0 print:overflow-visible" style={{ background: 'rgba(0,8,16,0.5)' }}>
           {currentSection === 'dashboard' && (
             <Dashboard
               onNavigateToNewBill={() => setCurrentSection('billing')}

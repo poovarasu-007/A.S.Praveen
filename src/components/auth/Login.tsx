@@ -1,242 +1,321 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Loader2, AlertCircle, Wheat } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useSettings } from '../../context/SettingsContext';
-import { Lock, User, ShieldCheck, AlertCircle, ArrowRight, Sprout, Sparkles } from 'lucide-react';
 
+/* ─────────────────────────────────────────────────────────────────────
+   Toast notification (self-contained)
+───────────────────────────────────────────────────────────────────── */
+interface ToastState {
+  message: string;
+  type: 'error' | 'info';
+  visible: boolean;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Arch SVG background component
+───────────────────────────────────────────────────────────────────── */
+const ArchBackground: React.FC = () => (
+  <div className="arch-overlay" aria-hidden="true">
+    <svg
+      className="absolute inset-0 w-full h-full"
+      viewBox="0 0 1440 900"
+      preserveAspectRatio="xMidYMid slice"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Outermost arch — faintest */}
+      <path
+        d="M120 900 L120 380 Q720 -80 1320 380 L1320 900"
+        stroke="rgba(92,124,137,0.10)"
+        strokeWidth="1"
+        fill="none"
+      />
+      {/* Outer arch */}
+      <path
+        d="M200 900 L200 420 Q720 0 1240 420 L1240 900"
+        stroke="rgba(92,124,137,0.14)"
+        strokeWidth="1"
+        fill="none"
+      />
+      {/* Mid-outer arch */}
+      <path
+        d="M290 900 L290 460 Q720 40 1150 460 L1150 900"
+        stroke="rgba(92,124,137,0.18)"
+        strokeWidth="1.2"
+        fill="none"
+      />
+      {/* Mid arch */}
+      <path
+        d="M390 900 L390 510 Q720 100 1050 510 L1050 900"
+        stroke="rgba(92,124,137,0.22)"
+        strokeWidth="1.2"
+        fill="none"
+      />
+      {/* Mid-inner arch */}
+      <path
+        d="M490 900 L490 570 Q720 170 950 570 L950 900"
+        stroke="rgba(92,124,137,0.28)"
+        strokeWidth="1.5"
+        fill="none"
+      />
+      {/* Inner arch */}
+      <path
+        d="M590 900 L590 640 Q720 240 850 640 L850 900"
+        stroke="rgba(92,124,137,0.35)"
+        strokeWidth="1.5"
+        fill="rgba(31,73,89,0.04)"
+      />
+      {/* Innermost arch glow */}
+      <path
+        d="M660 900 L660 700 Q720 300 780 700 L780 900"
+        stroke="rgba(92,124,137,0.5)"
+        strokeWidth="2"
+        fill="rgba(31,73,89,0.07)"
+      />
+
+      {/* Bottom atmospheric glow band */}
+      <ellipse
+        cx="720"
+        cy="870"
+        rx="600"
+        ry="120"
+        fill="rgba(31,73,89,0.12)"
+      />
+      <ellipse
+        cx="720"
+        cy="900"
+        rx="380"
+        ry="80"
+        fill="rgba(92,124,137,0.08)"
+      />
+
+      {/* Top key-light on arch apex */}
+      <ellipse
+        cx="720"
+        cy="200"
+        rx="160"
+        ry="60"
+        fill="rgba(92,124,137,0.05)"
+      />
+    </svg>
+  </div>
+);
+
+/* ─────────────────────────────────────────────────────────────────────
+   Main Login Component
+───────────────────────────────────────────────────────────────────── */
 export const Login: React.FC = () => {
   const { login } = useAuth();
-  const { settings } = useSettings();
-
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState<ToastState>({ message: '', type: 'error', visible: false });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+
+  const showToast = (message: string, type: 'error' | 'info' = 'error') => {
+    setToast({ message, type, visible: true });
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
     if (!username.trim() || !password.trim()) {
-      setError('Please enter both username and password.');
+      showToast('Please enter your username and password.');
       return;
     }
-
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const res = await login(username, password);
-      if (!res.success) {
-        setError(res.message || 'Invalid username or password');
+      const result = await login(username.trim(), password);
+      if (!result.success) {
+        showToast(result.message ?? 'Invalid credentials. Please try again.');
       }
-    } catch (err: any) {
-      setError(err?.message || 'Login error occurred');
+    } catch {
+      showToast('Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleQuickFill = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-    setError('');
-  };
-
   return (
-    <div
-      className="min-h-screen relative flex flex-col justify-center py-12 sm:px-6 lg:px-8 select-none overflow-hidden"
-      style={{
-        background: 'linear-gradient(135deg,#052E16 0%,#14532D 20%,#1E1B4B 45%,#4C1D95 65%,#831843 85%,#7c2d12 100%)',
-      }}
-    >
-      {/* Agricultural background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 scale-105"
-        style={{ backgroundImage: "url('/images/farmer_bullock_ploughing.jpg')" }}
-      />
-      {/* Gradient overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(135deg,rgba(5,46,22,0.85) 0%,rgba(30,27,75,0.80) 50%,rgba(76,29,149,0.80) 100%)',
-        }}
-      />
+    <div className="arch-bg min-h-screen flex flex-col items-center justify-center relative select-none">
+      {/* Noise texture */}
+      <div className="noise-overlay" />
 
-      {/* Gold stripe at top */}
-      <div
-        className="absolute top-0 left-0 right-0 h-1.5"
-        style={{
-          background: 'linear-gradient(90deg,#F59E0B,#D97706,#16A34A,#22C55E,#F59E0B)',
-        }}
-      />
+      {/* Arch SVG background */}
+      <ArchBackground />
 
-      {/* Header */}
-      <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
-        {/* Logo */}
+      {/* Content — layered above arch */}
+      <div className="relative z-10 w-full max-w-md px-4">
+
+        {/* Brand mark — animated reveal */}
         <div
-          className="inline-flex items-center justify-center w-20 h-20 rounded-3xl text-4xl mb-4 shadow-2xl"
-          style={{
-            background: 'linear-gradient(135deg,#F59E0B,#D97706)',
-            boxShadow: '0 0 0 3px #fff4, 0 0 40px #D9770660',
-          }}
+          className={`flex flex-col items-center mb-10 transition-all duration-700 ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+          }`}
         >
-          🌾
+          {/* Logo icon */}
+          <div className="relative mb-5">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, #1F4959 0%, #2d6275 100%)',
+                border: '1px solid rgba(92,124,137,0.4)',
+                boxShadow: '0 8px 32px rgba(31,73,89,0.45), inset 0 1px 0 rgba(255,255,255,0.1)',
+              }}
+            >
+              <Wheat size={28} className="text-white" />
+            </div>
+            {/* Soft glow ring */}
+            <div
+              className="absolute inset-0 rounded-2xl"
+              style={{
+                boxShadow: '0 0 40px rgba(92,124,137,0.3)',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
+
+          <h1
+            className="font-display text-3xl font-light tracking-widest text-white text-center"
+            style={{ letterSpacing: '0.12em' }}
+          >
+            A.S. PRAVEEN
+          </h1>
+          <span
+            className="font-display text-lg font-light mt-0.5 text-center"
+            style={{ color: 'rgba(92,124,137,0.9)', letterSpacing: '0.25em' }}
+          >
+            TRADERS
+          </span>
+          <p
+            className="text-xs mt-2 tracking-widest uppercase text-center"
+            style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '0.2em' }}
+          >
+            Agricultural Products &amp; Farm Inputs
+          </p>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight font-serif uppercase drop-shadow-lg">
-          {settings.businessName}
-        </h1>
-        <p className="mt-1 text-sm text-white/70 font-semibold tracking-wide">
-          {settings.tagline}
-        </p>
-
-        {/* GSTIN badge */}
+        {/* Login Card */}
         <div
-          className="inline-flex items-center space-x-2 mt-3 px-4 py-1.5 rounded-full text-[11px] font-mono font-bold text-white shadow-lg"
-          style={{ background: 'linear-gradient(90deg,#22C55E44,#16A34A44)', border: '1px solid #22C55E66' }}
+          className={`card-glass-dark p-8 transition-all duration-700 delay-200 ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+          style={{ transitionDelay: '0.18s' }}
         >
-          <Sparkles className="w-3 h-3 text-yellow-300" />
-          <span>GSTIN: {settings.gstin}</span>
-        </div>
-      </div>
-
-      {/* Login card */}
-      <div className="relative z-10 mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div
-          className="py-8 px-6 sm:px-10 rounded-3xl shadow-2xl"
-          style={{
-            background: 'rgba(255,255,255,0.97)',
-            backdropFilter: 'blur(20px)',
-            border: '2px solid #F59E0B',
-            boxShadow: '0 25px 60px rgba(0,0,0,0.35)',
-          }}
-        >
-          {/* Card top gold-green bar */}
-          <div
-            className="h-1 rounded-full mb-5"
-            style={{ background: 'linear-gradient(90deg,#F59E0B,#D97706,#16A34A,#22C55E)' }}
-          />
-
-          <div className="text-center mb-5">
-            <h2 className="text-base font-black text-gray-900 flex items-center justify-center space-x-1.5">
-              <Sprout className="w-4 h-4 text-green-600" />
-              <span>Counter Billing Terminal</span>
+          {/* Card header */}
+          <div className="mb-7 text-center">
+            <h2 className="text-white font-semibold text-lg tracking-wide">
+              Welcome Back
             </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Enter operator or administrator credentials
+            <p className="text-xs mt-1" style={{ color: 'rgba(92,124,137,0.7)', letterSpacing: '0.05em' }}>
+              Sign in to access the billing system
             </p>
           </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {error && (
-              <div className="p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 animate-pop-in"
-                style={{ background: '#fff1f2', border: '1px solid #fda4af', color: '#9f1239' }}>
-                <AlertCircle className="w-4 h-4 shrink-0" style={{ color: '#e11d48' }} />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* Username */}
+          <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
+            {/* Username field */}
             <div>
-              <label className="block text-xs font-bold text-gray-800 mb-1">Username / Operator ID</label>
-              <div className="relative">
-                <User className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin or operator"
-                  className="w-full pl-10 pr-3 py-2.5 text-sm font-semibold rounded-xl outline-none lowercase font-mono text-gray-900 shadow-sm transition-all"
-                  style={{ border: '2px solid #BBF7D0', background: '#f0fdf4' }}
-                  onFocus={(e) => { e.target.style.borderColor = '#16A34A'; e.target.style.boxShadow = '0 0 0 3px #16A34A22'; }}
-                  onBlur={(e)  => { e.target.style.borderColor = '#BBF7D0'; e.target.style.boxShadow = 'none'; }}
-                  required
-                />
-              </div>
+              <label htmlFor="login-username" className="label-arch">
+                Username
+              </label>
+              <input
+                id="login-username"
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                className="input-arch"
+                autoComplete="username"
+                spellCheck={false}
+                disabled={isLoading}
+              />
             </div>
 
-            {/* Password */}
+            {/* Password field */}
             <div>
-              <label className="block text-xs font-bold text-gray-800 mb-1">Password</label>
+              <label htmlFor="login-password" className="label-arch">
+                Password
+              </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  id="login-password"
+                  type={showPass ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-3 py-2.5 text-sm font-semibold rounded-xl outline-none text-gray-900 shadow-sm transition-all"
-                  style={{ border: '2px solid #DDD6FE', background: '#faf5ff' }}
-                  onFocus={(e) => { e.target.style.borderColor = '#7C3AED'; e.target.style.boxShadow = '0 0 0 3px #7C3AED22'; }}
-                  onBlur={(e)  => { e.target.style.borderColor = '#DDD6FE'; e.target.style.boxShadow = 'none'; }}
-                  required
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="input-arch pr-12"
+                  autoComplete="current-password"
+                  disabled={isLoading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors duration-200"
+                  style={{ color: 'rgba(92,124,137,0.7)' }}
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
+
+            {/* Hint */}
+            <p className="text-xs px-1" style={{ color: 'rgba(92,124,137,0.55)' }}>
+              Default credentials — Admin: <span style={{ color: 'rgba(255,255,255,0.5)' }}>admin</span> / Operator: <span style={{ color: 'rgba(255,255,255,0.5)' }}>operator</span>
+            </p>
 
             {/* Submit button */}
             <button
+              id="login-submit-btn"
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 px-4 text-white font-black text-sm rounded-xl shadow-xl flex items-center justify-center space-x-2 transition-all active:scale-[0.98] disabled:opacity-60"
-              style={{
-                background: isLoading
-                  ? '#9CA3AF'
-                  : 'linear-gradient(135deg,#16A34A,#15803D,#D97706)',
-                boxShadow: isLoading ? 'none' : '0 8px 24px rgba(21,128,61,0.35)',
-              }}
+              className="btn-primary w-full py-3.5 text-base tracking-widest mt-2"
+              style={{ letterSpacing: '0.12em' }}
             >
-              <span>{isLoading ? 'Verifying Terminal…' : 'Sign In to Counter'}</span>
-              <ArrowRight className="w-4 h-4" />
+              {isLoading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Authenticating…
+                </>
+              ) : (
+                'SIGN IN'
+              )}
             </button>
           </form>
-
-          {/* Quick fill */}
-          <div className="mt-6 pt-5 border-t border-gray-100">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block text-center mb-2">
-              Default Accounts (Click to Fill)
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin', 'admin123')}
-                className="p-2.5 rounded-xl text-left transition-all active:scale-95 shadow-sm hover:shadow-md"
-                style={{ background: '#fffbeb', border: '1px solid #FCD34D' }}
-              >
-                <div className="text-[11px] font-bold flex items-center space-x-1" style={{ color: '#78350F' }}>
-                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: '#D97706' }} />
-                  <span>Admin</span>
-                </div>
-                <div className="text-[10px] text-gray-600 font-mono mt-0.5">admin / admin123</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickFill('operator', 'operator123')}
-                className="p-2.5 rounded-xl text-left transition-all active:scale-95 shadow-sm hover:shadow-md"
-                style={{ background: '#f0fdf4', border: '1px solid #86EFAC' }}
-              >
-                <div className="text-[11px] font-bold flex items-center space-x-1" style={{ color: '#14532D' }}>
-                  <User className="w-3.5 h-3.5" style={{ color: '#16A34A' }} />
-                  <span>Operator</span>
-                </div>
-                <div className="text-[10px] text-gray-600 font-mono mt-0.5">operator / operator123</div>
-              </button>
-            </div>
-          </div>
         </div>
 
-        {/* Footer address */}
-        <p className="text-center text-xs text-white/70 mt-4 leading-tight font-medium drop-shadow">
-          📍 {settings.completeAddress} • 📞 {settings.mobile1} / {settings.mobile2}
+        {/* Footer note */}
+        <p
+          className={`text-center text-xs mt-8 transition-all duration-700 ${
+            mounted ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ color: 'rgba(92,124,137,0.4)', transitionDelay: '0.45s', letterSpacing: '0.05em' }}
+        >
+          Offline Billing System &nbsp;·&nbsp; v1.0.0
         </p>
       </div>
 
-      {/* Bottom gold-green stripe */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-1.5"
-        style={{
-          background: 'linear-gradient(90deg,#22C55E,#16A34A,#D97706,#F59E0B)',
-        }}
-      />
+      {/* Toast notification */}
+      {toast.visible && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl px-5 py-3.5 text-sm font-semibold animate-slide-down ${
+            toast.type === 'error' ? 'toast-error' : 'toast-info'
+          }`}
+          role="alert"
+        >
+          <AlertCircle size={16} className="flex-shrink-0" />
+          <span>{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 };
+
+export default Login;
