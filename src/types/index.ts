@@ -115,6 +115,7 @@ export interface User {
   passwordHash: string;
   role: UserRole;
   name: string;
+  phone?: string;
   active: boolean;
   createdAt: string;
 }

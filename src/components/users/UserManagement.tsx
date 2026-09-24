@@ -19,6 +19,49 @@ export const UserManagement: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [feedback, setFeedback] = useState('');
 
+  // Reset Password State
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [resetUser, setResetUser] = useState<User | null>(null);
+  const [resetNewPassword, setResetNewPassword] = useState('');
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetUser) return;
+    setErrorMsg('');
+
+    if (!resetNewPassword || resetNewPassword.length < 4) {
+      setErrorMsg('New password must be at least 4 characters long.');
+      return;
+    }
+
+    try {
+      const passwordHash = await hashPassword(resetNewPassword);
+      await db.users.update(resetUser.id, { passwordHash });
+      const now = new Date().toISOString();
+
+      await db.auditLogs.add({
+        id: `audit_${Date.now()}`,
+        timestamp: now,
+        date: formatDate(new Date()),
+        time: formatTime(new Date()),
+        user: currentUser?.username || 'admin',
+        role: 'ADMIN',
+        action: 'Admin Reset Password',
+        recordType: 'USER',
+        recordId: resetUser.id,
+        details: `Administrator reset password for ${resetUser.username}`
+      });
+
+      setFeedback(`Password for ${resetUser.username} was reset successfully.`);
+      setIsResetOpen(false);
+      setResetUser(null);
+      setResetNewPassword('');
+      setTimeout(() => setFeedback(''), 4000);
+    } catch (err: any) {
+      setErrorMsg('Failed to reset password: ' + err?.message);
+    }
+  };
+
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -177,18 +220,34 @@ export const UserManagement: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-3 px-4 text-center">
-                    {u.username !== 'admin' && (
+                    <div className="flex items-center justify-center gap-1.5">
                       <button
-                        onClick={() => handleToggleActive(u)}
-                        className={`text-xs font-bold px-3 py-1 rounded-lg transition-colors ${
-                          u.active
-                            ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                        }`}
+                        onClick={() => {
+                          setResetUser(u);
+                          setResetNewPassword('');
+                          setErrorMsg('');
+                          setIsResetOpen(true);
+                        }}
+                        className="text-xs font-bold px-2.5 py-1 rounded-lg bg-agri-50 text-agri-800 hover:bg-agri-100 border border-agri-200 inline-flex items-center gap-1 transition-colors"
+                        title="Reset password"
                       >
-                        {u.active ? 'Deactivate' : 'Activate'}
+                        <Key className="w-3 h-3 text-agri-gold" />
+                        <span>Reset Key</span>
                       </button>
-                    )}
+
+                      {u.username !== 'admin' && (
+                        <button
+                          onClick={() => handleToggleActive(u)}
+                          className={`text-xs font-bold px-3 py-1 rounded-lg transition-colors ${
+                            u.active
+                              ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                          }`}
+                        >
+                          {u.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -275,6 +334,74 @@ export const UserManagement: React.FC = () => {
                   className="px-5 py-2 font-bold text-white bg-agri-700 hover:bg-agri-800 rounded-xl shadow"
                 >
                   Create Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {isResetOpen && resetUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-gray-200">
+            <div className="bg-agri-900 text-white p-4 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Key className="w-4 h-4 text-agri-gold" />
+                <h3 className="font-bold text-sm">Reset Password</h3>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsResetOpen(false);
+                  setResetUser(null);
+                }} 
+                className="text-gray-300 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleResetPassword} className="p-5 space-y-3.5 text-xs">
+              <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+                <div className="text-gray-500 font-medium">User Account:</div>
+                <div className="font-bold text-gray-900 text-sm">{resetUser.name} <span className="font-mono text-xs text-gray-500">(@{resetUser.username})</span></div>
+              </div>
+
+              {errorMsg && (
+                <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg font-semibold flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={resetNewPassword}
+                  onChange={(e) => setResetNewPassword(e.target.value)}
+                  placeholder="Enter at least 4 characters"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-agri-600"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsResetOpen(false);
+                    setResetUser(null);
+                  }}
+                  className="px-4 py-2 font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 font-bold text-white bg-agri-700 hover:bg-agri-800 rounded-xl shadow"
+                >
+                  Save Password
                 </button>
               </div>
             </form>
