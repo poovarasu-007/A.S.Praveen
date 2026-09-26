@@ -86,6 +86,13 @@
   roleAdmin: string;
   roleManager: string;
   roleOperator: string;
+  loginHeroEyebrow: string;
+  loginHeroTitle: string;
+  loginHeroCaption: string;
+  loginHeroFeatureOffline: string;
+  loginHeroFeatureGst: string;
+  loginHeroFeaturePrint: string;
+  loginImageAlt: string;
 
   // Dashboard
   todaySales: string;
@@ -297,6 +304,13 @@ const baseTranslations: Record<'en' | 'ta', TranslationDictionary> = {
     // Auth & Roles
     welcomeBack: 'Welcome Back',
     signInSubtitle: 'Sign in to access the agricultural billing counter',
+    loginHeroEyebrow: 'Agricultural Billing System',
+    loginHeroTitle: 'Every farm bill, counted and recorded',
+    loginHeroCaption: 'Bill seeds, fertilizer and farm inputs for farmers across Tamil Nadu — with GST-ready totals and thermal printing.',
+    loginHeroFeatureOffline: 'Works offline',
+    loginHeroFeatureGst: 'GST ready',
+    loginHeroFeaturePrint: 'Thermal & A4 print',
+    loginImageAlt: 'Farmers working in a green agricultural field using traditional bullock ploughing and modern farming machinery',
     username: 'Username',
     usernamePlaceholder: 'Enter your username',
     password: 'Password',
@@ -539,6 +553,13 @@ const baseTranslations: Record<'en' | 'ta', TranslationDictionary> = {
     // Auth & Roles
     welcomeBack: 'வணக்கம், மீண்டும் வருக!',
     signInSubtitle: 'பில்லிங் கவுண்ட்டரை அணுக உள்நுழையவும்',
+    loginHeroEyebrow: 'வேளாண் பில்லிங் சிஸ்டம்',
+    loginHeroTitle: 'ஒவ்வொரு வயல் பில்லும், கணக்கில் பதிவு செய்யப்பட்டது',
+    loginHeroCaption: 'தமிழ்நாட்டின் விவசாயிகளுக்கு விதை, உரம் மற்றும் வேளாண் உள்ளீட்டுப் பில்களை GST முன்னெச்சரிக்கையுடன் தெர்மல் அச்சித்து வழங்குங்கள்.',
+    loginHeroFeatureOffline: 'ஆஃப்லைனில் செயல்படும்',
+    loginHeroFeatureGst: 'GST ஏற்பத்து',
+    loginHeroFeaturePrint: 'தெர்மல் & A4 அச்சிடுதல்',
+    loginImageAlt: 'பசுமையான விவசாய வயலில் பாரம்பரிய மாட்டு ஏர் உழவு மற்றும் நவீன விவசாய இயந்திரங்களுடன் பணிபுரியும் விவசாயிகள்',
     username: 'பயனாளர் பெயர் (Username)',
     usernamePlaceholder: 'உங்கள் பயனாளர் பெயரை உள்ளிடவும்',
     password: 'கடவுச்சொல் (Password)',

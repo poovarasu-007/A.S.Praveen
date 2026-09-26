@@ -332,15 +332,21 @@ input[type='checkbox'], input[type='radio'] { accent-color: var(--color-primary-
 
 /* Auth and portal surfaces remain calm and readable in the global light theme. */
 .auth-shell { min-height: 100vh; }
-.auth-card { width: 100%; max-width: 30rem; border: 1px solid var(--card-border); border-radius: 1.25rem; background: rgba(255,255,255,0.96); box-shadow: var(--shadow-lg); }
+.auth-card { width: 100%; max-width: 420px; border: 1px solid rgba(2,51,55,0.08); border-radius: 20px; background: #FFFFFF; box-shadow: 0 10px 35px rgba(2,51,55,0.10); }
 .auth-card .label-arch { color: var(--color-text-secondary); }
 .auth-card .input-arch { background: #fff; color: var(--color-primary-900); }
 .auth-card a, .auth-card button:not(.btn-primary):not(.btn-secondary):not(.btn-outline) { color: var(--color-secondary-700); }
 .auth-card a:hover, .auth-card button:not(.btn-primary):not(.btn-secondary):not(.btn-outline):hover { color: var(--color-primary-900); }
 .language-switcher { display: inline-flex; align-items: center; gap: 0.15rem; padding: 0.2rem; border: 1px solid rgba(193,230,186,0.35); border-radius: 0.75rem; background: var(--color-primary-800); }
-.language-switcher button { min-height: 2rem; padding: 0.3rem 0.6rem; border-radius: 0.5rem; color: rgba(255,255,255,0.82); font-size: 0.75rem; font-weight: 700; }
+.language-switcher button { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; min-width: 2.75rem; padding: 0.3rem 0.7rem; border-radius: 0.5rem; color: rgba(255,255,255,0.82); font-size: 0.75rem; font-weight: 700; }
 .language-switcher button:hover { color: #fff; background: var(--color-primary-700); }
 .language-switcher button[aria-pressed='true'] { color: var(--color-primary-900); background: var(--color-primary-100); box-shadow: var(--shadow-sm); }
+/* Light variant for the pale mint authentication panel. */
+.language-switcher--light { border-color: var(--color-primary-100); background: #FFFFFF; box-shadow: var(--shadow-sm); }
+.language-switcher--light button { color: var(--color-text-secondary); }
+.language-switcher--light button:hover { color: var(--color-primary-900); background: var(--color-bg-elevated); }
+.language-switcher--light button[aria-pressed='true'] { color: #FFFFFF; background: var(--color-primary-900); }
+.language-switcher--light svg { color: var(--color-secondary-700); }
 
 /* Skeletons use the botanical palette and stop animating when requested. */
 .skeleton { background: linear-gradient(90deg, var(--color-primary-100) 25%, var(--color-bg-elevated) 37%, var(--color-primary-100) 63%); background-size: 400% 100%; animation: shimmer 2.5s ease-in-out infinite; }

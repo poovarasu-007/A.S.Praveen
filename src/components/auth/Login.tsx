@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
+import { LoginHero } from './LoginHero';
 import { interpolate } from '../../utils/i18n';
 import type { UserRole } from '../../types';
 
@@ -25,23 +26,9 @@ interface ToastState {
   visible: boolean;
 }
 
-const ArchBackground: React.FC = () => (
-  <div className="arch-overlay" aria-hidden="true">
-    <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
-      <path d="M120 900V380Q720-80 1320 380V900" stroke="currentColor" strokeOpacity=".12" />
-      <path d="M200 900V420Q720 0 1240 420V900" stroke="currentColor" strokeOpacity=".16" />
-      <path d="M290 900V460Q720 40 1150 460V900" stroke="currentColor" strokeOpacity=".20" />
-      <path d="M390 900V510Q720 100 1050 510V900" stroke="currentColor" strokeOpacity=".24" />
-      <path d="M490 900V570Q720 170 950 570V900" stroke="currentColor" strokeOpacity=".28" />
-      <path d="M590 900V640Q720 240 850 640V900" stroke="currentColor" strokeOpacity=".34" />
-      <ellipse cx="720" cy="870" rx="600" ry="120" fill="currentColor" fillOpacity=".06" />
-      <ellipse cx="720" cy="900" rx="380" ry="80" fill="currentColor" fillOpacity=".08" />
-    </svg>
-  </div>
-);
-
 /** Authentication, registration, and password recovery share the same light
- * botanical language. Business logic remains delegated to AuthContext. */
+ * botanical language and the agricultural photograph panel. Business logic
+ * remains delegated to AuthContext. */
 export const Login: React.FC = () => {
   const { login, createUser, resetPassword } = useAuth();
   const { t } = useSettings();
@@ -185,21 +172,29 @@ export const Login: React.FC = () => {
   const subtitle = mode === 'login' ? t.signInSubtitle : mode === 'register' ? t.createAccountSubtitle : t.forgotPasswordSubtitle;
 
   return (
-    <div className="auth-shell arch-bg min-h-screen px-4 py-6 sm:px-6 sm:py-10">
-      <div className="noise-overlay" aria-hidden="true" />
-      <ArchBackground />
-      <main className="relative z-10 mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-5xl flex-col">
-        <div className="mb-5 flex items-center justify-end"><LanguageSwitcher compact light /></div>
-        <div className="flex flex-1 items-center justify-center">
-          <div className={`auth-card transition-all duration-500 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'}`}>
-            <div className="flex flex-col items-center border-b border-border-subtle px-6 pb-6 pt-7 text-center sm:px-9">
+    <div className="min-h-screen bg-background lg:grid lg:h-screen lg:grid-cols-[52%_48%] lg:overflow-hidden">
+      <LoginHero entered={mounted} />
+
+      <main className="relative flex min-h-[calc(100vh-200px)] flex-col overflow-hidden bg-primary-50 sm:min-h-[calc(100vh-260px)] lg:h-full lg:min-h-0 lg:overflow-y-auto">
+        {/* Soft botanical wash built from design tokens (no extra palette). */}
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-primary-100/50 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-primary-200/40 blur-3xl" />
+
+        <div className="relative z-10 flex flex-1 flex-col px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10 xl:px-12">
+          <div className="mb-5 flex items-center justify-end lg:mb-8">
+            <LanguageSwitcher compact light />
+          </div>
+
+          <div className="flex flex-1 items-center justify-center">
+            <div className={`auth-card w-full transition-all duration-500 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'}`}>
+              <div className="flex flex-col items-center border-b border-border-subtle px-6 pb-6 pt-7 text-center sm:px-8">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary-100 bg-primary-900 shadow-soft" aria-hidden="true"><Wheat size={30} className="text-white" /></div>
               <p className="font-display text-2xl font-semibold tracking-wide text-primary-900">{t.brandName}</p>
               <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-secondary-700">{t.brandSub}</p>
               <p className="mt-3 text-xs text-text-tertiary">{t.authTagline}</p>
             </div>
 
-            <div className="px-6 py-6 sm:px-9 sm:py-8">
+            <div className="px-6 py-6 sm:px-8 sm:py-7">
               <div className="mb-6 text-center">
                 <h1 className="text-xl font-semibold text-primary-900">{title}</h1>
                 <p className="mt-1 text-sm text-text-secondary">{subtitle}</p>
@@ -217,8 +212,8 @@ export const Login: React.FC = () => {
                       <button type="button" className="text-xs font-semibold text-secondary-700 underline underline-offset-2 hover:text-primary-900" onClick={() => { setForgotUsername(username.trim()); setMode('forgot'); }}>{t.forgotPassword}</button>
                     </div>
                     <div className="relative">
-                      <input id="login-password" className="input-arch pr-12" type={showPass ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t.passwordPlaceholder} autoComplete="current-password" disabled={isLoading} />
-                      <button type="button" onClick={() => setShowPass((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-text-tertiary hover:bg-primary-50 hover:text-primary-900" aria-label={showPass ? t.authHidePassword : t.authShowPassword} title={showPass ? t.authHidePassword : t.authShowPassword}>{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                      <input id="login-password" className="input-arch pr-14" type={showPass ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t.passwordPlaceholder} autoComplete="current-password" disabled={isLoading} />
+                      <button type="button" onClick={() => setShowPass((value) => !value)} className="absolute right-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-primary-50 hover:text-primary-900" aria-label={showPass ? t.authHidePassword : t.authShowPassword} title={showPass ? t.authHidePassword : t.authShowPassword}>{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button>
                     </div>
                   </div>
                   <p className="rounded-xl border border-primary-100 bg-primary-50 px-3 py-2 text-xs text-text-secondary">{t.defaultCredentials}</p>
@@ -252,8 +247,9 @@ export const Login: React.FC = () => {
               )}
             </div>
           </div>
+          </div>
+          <p className="mt-5 text-center text-xs text-text-tertiary">{t.offlineBillingSystem} · v1.0.0</p>
         </div>
-        <p className="mt-5 text-center text-xs text-text-tertiary">{t.offlineBillingSystem} · v1.0.0</p>
       </main>
 
       {toast.visible && <div className={`toast ${toast.type === 'error' ? 'toast-error' : 'toast-info'}`} role="alert" aria-live="polite">{toast.type === 'error' ? <AlertCircle size={17} aria-hidden="true" /> : <CheckCircle2 size={17} aria-hidden="true" /> }<span>{toast.message}</span></div>}
