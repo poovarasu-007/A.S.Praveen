@@ -23,6 +23,7 @@ import { AuditLogViewer } from './components/audit/AuditLogViewer';
 // Print & Inspection Modals
 import { BillDetailsModal } from './components/history/BillDetailsModal';
 import { PrintModal } from './components/print/PrintModal';
+import { GlobalAgriculturalBackground } from './components/common/GlobalAgriculturalBackground';
 import type { Bill } from './types';
 import { Wheat } from 'lucide-react';
 
@@ -74,7 +75,13 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-primary-900">
+    <div className="relative flex min-h-screen flex-col bg-background/70 text-primary-900">
+      {/* Unified Global Agricultural Background with 50% opacity in Billing */}
+      <GlobalAgriculturalBackground
+        opacity={currentSection === 'billing' ? 0.5 : 0.85}
+        showMist={true}
+      />
+
       {/* Top Header */}
       <Header onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} />
 
@@ -91,8 +98,8 @@ export const App: React.FC = () => {
           onCloseMobile={() => setIsMobileSidebarOpen(false)}
         />
 
-        {/* Dynamic Content View */}
-        <main className="flex-1 overflow-y-auto bg-background p-3 sm:p-4 md:p-6 print:p-0 print:overflow-visible">
+        {/* Dynamic Content View with transparent background over the agricultural scenery */}
+        <main className="flex-1 overflow-y-auto bg-transparent p-3 sm:p-4 md:p-6 print:p-0 print:overflow-visible">
           {currentSection === 'dashboard' && (
             <Dashboard
               onNavigateToNewBill={() => setCurrentSection('billing')}

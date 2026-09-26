@@ -172,10 +172,10 @@ export const Login: React.FC = () => {
   const subtitle = mode === 'login' ? t.signInSubtitle : mode === 'register' ? t.createAccountSubtitle : t.forgotPasswordSubtitle;
 
   return (
-    <div className="min-h-screen bg-background lg:grid lg:h-screen lg:grid-cols-[52%_48%] lg:overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col lg:grid lg:h-screen lg:grid-cols-[54%_46%] lg:overflow-hidden">
       <LoginHero entered={mounted} />
 
-      <main className="relative flex min-h-[calc(100vh-200px)] flex-col overflow-hidden bg-primary-50 sm:min-h-[calc(100vh-260px)] lg:h-full lg:min-h-0 lg:overflow-y-auto">
+      <main className="relative flex flex-1 flex-col overflow-hidden bg-primary-50 lg:h-full lg:min-h-0 lg:overflow-y-auto">
         {/* Soft botanical wash built from design tokens (no extra palette). */}
         <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-primary-100/50 blur-3xl" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-primary-200/40 blur-3xl" />

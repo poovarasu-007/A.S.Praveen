@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db';
 import { getNextBillNumber } from '../../db/sequence';
@@ -461,7 +461,16 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
   };
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto pb-8">
+    <div className="relative space-y-5 max-w-7xl mx-auto pb-8">
+      {/* ── BackgroundLayer: Agricultural background at 50% opacity for on-screen billing ── */}
+      <div
+        className="billing-background pointer-events-none fixed inset-0 z-[-1] bg-cover bg-center transition-opacity duration-500"
+        style={{
+          backgroundImage: "url('/images/farmer_bullock_ploughing.jpg')",
+          opacity: 0.5,
+        }}
+        aria-hidden="true"
+      />
       {/* ── Header Banner ─────────────────────────────────────────── */}
       <div
         className="rounded-2xl overflow-hidden"
