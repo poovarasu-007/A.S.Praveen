@@ -53,7 +53,6 @@ export const Login: React.FC = () => {
   const [regUsername, setRegUsername] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regRole, setRegRole] = useState<UserRole>('OPERATOR');
-  const [regAdminKey, setRegAdminKey] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [showRegPass, setShowRegPass] = useState(false);
@@ -133,13 +132,6 @@ export const Login: React.FC = () => {
       showToast(t.authPasswordsMismatch);
       return;
     }
-    if (regRole === 'ADMIN') {
-      const validAdminKeys = ['asp@2024', 'asp2024', 'admin123', '8825633575'];
-      if (!validAdminKeys.includes(regAdminKey.trim().toLowerCase())) {
-        showToast(t.authAdminKeyRequired);
-        return;
-      }
-    }
     setIsLoading(true);
     try {
       const result = await createUser({
@@ -154,7 +146,7 @@ export const Login: React.FC = () => {
         showToast(t.authAccountCreated, 'info');
         setUsername(cleanUsername);
         setPassword('');
-        setRegName(''); setRegUsername(''); setRegPhone(''); setRegPassword(''); setRegConfirmPassword(''); setRegAdminKey(''); setRegRole('OPERATOR');
+        setRegName(''); setRegUsername(''); setRegPhone(''); setRegPassword(''); setRegConfirmPassword(''); setRegRole('OPERATOR');
         setMode('login');
       } else {
         showToast(localizeAuthMessage(result.message || t.authUnexpected));
@@ -242,7 +234,6 @@ export const Login: React.FC = () => {
                   <div><label className="label-arch" htmlFor="reg-username">{t.username} *</label><input id="reg-username" className="input-arch font-mono" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} placeholder={t.usernamePlaceholder} autoComplete="username" disabled={isLoading} /></div>
                   <div><label className="label-arch" htmlFor="reg-phone">{t.phoneNumber} ({t.authMobileOptional})</label><div className="relative"><Phone size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" aria-hidden="true" /><input id="reg-phone" className="input-arch pl-9 font-mono" type="tel" value={regPhone} onChange={(e) => setRegPhone(e.target.value)} placeholder={t.phoneNumberPlaceholder} autoComplete="tel" disabled={isLoading} /></div></div>
                   <fieldset><legend className="label-arch">{t.role} *</legend><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setRegRole('OPERATOR')} aria-pressed={regRole === 'OPERATOR'} className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${regRole === 'OPERATOR' ? 'border-primary-500 bg-primary-100 text-primary-900' : 'border-border bg-white text-text-secondary hover:bg-primary-50'}`}><UserIcon size={15} />{t.roleOperator}</button><button type="button" onClick={() => setRegRole('ADMIN')} aria-pressed={regRole === 'ADMIN'} className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${regRole === 'ADMIN' ? 'border-primary-500 bg-primary-100 text-primary-900' : 'border-border bg-white text-text-secondary hover:bg-primary-50'}`}><ShieldCheck size={15} />{t.roleAdmin}</button></div></fieldset>
-                  {regRole === 'ADMIN' && <div className="rounded-xl border border-warning/40 bg-warning-bg p-3"><label className="label-arch" htmlFor="reg-adminkey">{t.adminSecretKey} *</label><input id="reg-adminkey" className="input-arch" type="password" value={regAdminKey} onChange={(e) => setRegAdminKey(e.target.value)} placeholder={t.adminSecretKeyPlaceholder} disabled={isLoading} /><p className="mt-1 text-xs text-warning">{t.authAdminKeyRequired}</p></div>}
                   <div className="grid gap-3 sm:grid-cols-2"><div><label className="label-arch" htmlFor="reg-password">{t.password} *</label><div className="relative"><input id="reg-password" className="input-arch pr-11" type={showRegPass ? 'text' : 'password'} value={regPassword} onChange={(e) => setRegPassword(e.target.value)} placeholder={t.authMinChars} autoComplete="new-password" disabled={isLoading} /><button type="button" onClick={() => setShowRegPass((value) => !value)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-text-tertiary hover:bg-primary-50 hover:text-primary-900" aria-label={showRegPass ? t.authHidePassword : t.authShowPassword}>{showRegPass ? <EyeOff size={15} /> : <Eye size={15} />}</button></div></div><div><label className="label-arch" htmlFor="reg-confirm-password">{t.confirmPassword} *</label><input id="reg-confirm-password" className="input-arch" type={showRegPass ? 'text' : 'password'} value={regConfirmPassword} onChange={(e) => setRegConfirmPassword(e.target.value)} placeholder={t.authRepeatPassword} autoComplete="new-password" disabled={isLoading} /></div></div>
                   <button id="register-submit-btn" type="submit" disabled={isLoading} className="btn-primary w-full py-3">{isLoading ? <><Loader2 size={17} className="animate-spin" />{t.loading}</> : t.createAccountButton}</button>
                   <div className="text-center"><button type="button" onClick={() => setMode('login')} className="text-sm text-secondary-700 hover:text-primary-900">{t.authLoginAgain}</button></div>
