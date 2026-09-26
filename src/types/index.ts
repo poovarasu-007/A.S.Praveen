@@ -57,6 +57,7 @@ export interface BillItem {
   id: string;
   productId: string;
   productName: string;
+  hsnCode?: string;
   unit: UnitType;
   rate: number; // Fixed price snapshot from Product Master at time of bill
   quantity: number;

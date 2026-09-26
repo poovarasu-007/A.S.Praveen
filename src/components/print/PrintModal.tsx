@@ -1,157 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, FileText, Printer, Receipt, X } from 'lucide-react';
 import type { Bill, BusinessSettings } from '../../types';
-import { ThermalBill } from './ThermalBill';
+import { useSettings } from '../../context/SettingsContext';
 import { A4Invoice } from './A4Invoice';
-import { Printer, X, FileText, Receipt, ArrowLeft, Check } from 'lucide-react';
+import { ThermalBill } from './ThermalBill';
 
-interface PrintModalProps {
-  isOpen: boolean;
-  bill: Bill | null;
-  settings: BusinessSettings;
-  onClose: () => void;
-}
+interface PrintModalProps { isOpen: boolean; bill: Bill | null; settings: BusinessSettings; onClose: () => void; }
+type PrintFormat = 'village' | 'A4' | 'A5' | '80mm';
 
-export const PrintModal: React.FC<PrintModalProps> = ({
-  isOpen,
-  bill,
-  settings,
-  onClose,
-}) => {
-  const [format, setFormat] = useState<'village' | 'A4' | 'A5' | '80mm'>(
-    bill?.billFormat === 'traditional' ? 'village' : ((settings.defaultPrintFormat as any) || 'village')
-  );
-
-  // Keyboard shortcut Ctrl+P while modal is open to trigger window.print
+export const PrintModal: React.FC<PrintModalProps> = ({ isOpen, bill, settings, onClose }) => {
+  const { t } = useSettings();
+  const [format, setFormat] = useState<PrintFormat>(bill?.billFormat === 'traditional' ? 'village' : settings.defaultPrintFormat === 'A4' ? 'A4' : '80mm');
   useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'p') {
-        e.preventDefault();
-        window.print();
-      } else if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
+    if (isOpen) setFormat(bill?.billFormat === 'traditional' ? 'village' : settings.defaultPrintFormat === 'A4' ? 'A4' : '80mm');
+  }, [isOpen, bill?.billNumber, bill?.billFormat, settings.defaultPrintFormat]);
+  useEffect(() => { if (!isOpen) return; const onKeyDown = (event: KeyboardEvent) => { if (event.ctrlKey && event.key.toLowerCase() === 'p') { event.preventDefault(); window.print(); } else if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKeyDown); return () => window.removeEventListener('keydown', onKeyDown); }, [isOpen, onClose]);
   if (!isOpen || !bill) return null;
-
-  const handlePrint = () => {
-    window.print();
-  };
-
+  const formats: { id: PrintFormat; label: string; icon?: React.ReactNode }[] = [{ id: 'village', label: t.villageFormat }, { id: 'A4', label: t.a4Standard, icon: <FileText size={14} /> }, { id: 'A5', label: t.a5Compact, icon: <FileText size={14} /> }, { id: '80mm', label: t.thermal80mm, icon: <Receipt size={14} /> }];
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-950/85 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
-      {/* Top Toolbar (Hidden during print) */}
-      <div className="sticky top-0 z-20 bg-agri-950 text-white px-4 py-3 shadow-xl flex items-center justify-between print:hidden border-b-2 border-agri-gold/40 flex-wrap gap-2">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center space-x-1 text-xs font-bold transition-all active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Billing</span>
-          </button>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-black uppercase text-white">
-                🖨️ PRINT BILL / INVOICE
-              </span>
-              <span className="text-xs bg-agri-gold text-agri-950 px-2.5 py-0.5 rounded-full font-mono font-black shadow-sm">
-                {bill.billNumber}
-              </span>
-            </div>
-            <p className="text-[11px] text-emerald-200 hidden sm:block">
-              Traditional Village Agri bill & GST invoice preview • Press <strong>Ctrl + P</strong> to print
-            </p>
-          </div>
-        </div>
-
-        {/* Paper Format Switcher (Village, A4, A5, 80mm) */}
-        <div className="flex items-center space-x-1 bg-black/50 p-1 rounded-2xl border border-white/20">
-          <button
-            onClick={() => setFormat('village')}
-            className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-              format === 'village'
-                ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-agri-950 shadow-md scale-[1.02]'
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            <span>🌾 கிராம ரசீது (Village)</span>
-          </button>
-          <button
-            onClick={() => setFormat('A4')}
-            className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-              format === 'A4'
-                ? 'bg-agri-gold text-agri-950 shadow-md scale-[1.02]'
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>A4 Standard</span>
-          </button>
-          <button
-            onClick={() => setFormat('A5')}
-            className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-              format === 'A5'
-                ? 'bg-agri-gold text-agri-950 shadow-md scale-[1.02]'
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>A5 Compact</span>
-          </button>
-          <button
-            onClick={() => setFormat('80mm')}
-            className={`flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-              format === '80mm'
-                ? 'bg-agri-gold text-agri-950 shadow-md scale-[1.02]'
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            <Receipt className="w-3.5 h-3.5" />
-            <span>80mm Thermal</span>
-          </button>
-        </div>
-
-        {/* Print Action Buttons */}
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handlePrint}
-            className="flex items-center space-x-2 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm shadow-xl active:scale-95 transition-all ring-2 ring-emerald-300"
-          >
-            <Printer className="w-5 h-5 text-amber-200 stroke-[2.5]" />
-            <span>PRINT BILL</span>
-          </button>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
-            title="Close Preview (Esc)"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Preview Body Container */}
-      <div className="flex-1 p-4 md:p-8 flex justify-center items-start print:p-0 print:m-0 print:bg-white">
-        <div className="bg-white rounded-2xl shadow-2xl p-2 print:p-0 print:shadow-none print:rounded-none max-w-full overflow-x-auto">
-          {format === '80mm' ? (
-            <div className="print-area-thermal">
-              <ThermalBill bill={bill} settings={settings} />
-            </div>
-          ) : (
-            <div className={format === 'A5' ? 'print-area-a5' : 'print-area-a4'}>
-              <A4Invoice bill={bill} settings={settings} isA5={format === 'A5'} isTraditional={format === 'village'} />
-            </div>
-          )}
-        </div>
-      </div>
+    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-primary-900/95 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={t.printInvoice}>
+      <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-primary-700 bg-primary-900 px-4 py-3 text-white shadow-soft print:hidden"><div className="flex items-center gap-3"><button type="button" onClick={onClose} className="btn-light px-3 py-2 text-xs"><ArrowLeft size={15} aria-hidden="true" />{t.backToBilling}</button><div><div className="flex items-center gap-2"><span className="text-sm font-semibold">{t.printInvoice}</span><span className="rounded-full bg-primary-100 px-2.5 py-0.5 font-mono text-xs font-bold text-primary-900">{bill.billNumber}</span></div><p className="hidden text-[11px] text-primary-100 sm:block">{t.traditionalBill} · {t.pressCtrlP}</p></div></div><div className="flex flex-wrap items-center gap-1 rounded-2xl border border-primary-700 bg-primary-800 p-1" role="group" aria-label={t.invoiceType}>{formats.map(({ id, label, icon }) => <button key={id} type="button" onClick={() => setFormat(id)} aria-pressed={format === id} className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${format === id ? 'bg-primary-100 text-primary-900' : 'text-primary-100 hover:bg-primary-700'}`}>{icon}{label}</button>)}</div><div className="flex items-center gap-2"><button type="button" onClick={() => window.print()} className="btn-secondary px-5 py-2.5 text-sm"><Printer size={17} aria-hidden="true" />{t.printBill}</button><button type="button" onClick={onClose} className="rounded-xl p-2 text-primary-100 hover:bg-primary-700 hover:text-white" aria-label={t.close} title={t.close}><X size={19} aria-hidden="true" /></button></div></div>
+      <div className="flex flex-1 items-start justify-center p-4 print:p-0 print:bg-white md:p-8"><div className="max-w-full overflow-x-auto rounded-2xl bg-white p-2 shadow-soft-lg print:rounded-none print:p-0 print:shadow-none">{format === '80mm' ? <div className="print-area-thermal"><ThermalBill bill={bill} settings={settings} /></div> : <div className={format === 'A5' ? 'print-area-a5' : 'print-area-a4'}><A4Invoice bill={bill} settings={settings} isA5={format === 'A5'} isTraditional={format === 'village'} /></div>}</div></div>
     </div>
   );
 };
-

@@ -6,27 +6,54 @@ import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { formatCurrency } from '../../utils/currency';
 import { formatDate, formatTime, getTodayDateString } from '../../utils/date';
+import { formatNumber } from '../../utils/i18n';
 import { BillDetailsModal } from './BillDetailsModal';
 import { PrintModal } from '../print/PrintModal';
 import { ConfirmModal } from '../common/ConfirmModal';
-import type { Bill } from '../../types';
-import {
-  History,
-  Search,
-  Calendar,
-  Eye,
-  Printer,
-  Trash2,
-  Filter,
-  CheckCircle2,
-  FileSpreadsheet
-} from 'lucide-react';
+import type { Bill, PaymentMethod } from '../../types';
+import { History, Search, Eye, Printer, Trash2, CheckCircle2 } from 'lucide-react';
 
 type DateFilter = 'all' | 'today' | 'yesterday' | 'this_week' | 'this_month' | 'custom';
 
+const COPY = {
+  en: {
+    historySubtitle: 'A permanent record of sales and securely stored invoices',
+    totalBills: 'Total bills',
+    searchPlaceholder: 'Search by bill number, customer, mobile or product...',
+    allBills: 'All bills',
+    yesterday: 'Yesterday',
+    emptyHint: 'Create a bill to begin tracking sales history.',
+    viewDetails: 'View bill details',
+    printBill: 'Print or reprint bill',
+    deleteBill: 'Delete bill (administrator only)',
+    deleteError: 'Unable to delete the bill.',
+    deleteTitle: 'Permanently delete this bill?',
+    deleteWarning: 'This bill will be permanently deleted from local storage. The operation will be recorded in the audit log.',
+    deletePermanently: 'Delete permanently',
+    billDeleted: 'Bill {number} was permanently deleted.',
+  },
+  ta: {
+    historySubtitle: 'விற்பனைகளின் நிரந்தர பதிவும் பாதுகாப்பாக சேமிக்கப்பட்ட ரசீதுகளும்',
+    totalBills: 'மொத்த பில்கள்',
+    searchPlaceholder: 'பில் எண், வாடிக்கையாளர், கைபேசி அல்லது பொருள் மூலம் தேடுங்கள்...',
+    allBills: 'அனைத்துப் பில்கள்',
+    yesterday: 'நேற்று',
+    emptyHint: 'விற்பனை வரலாறைப் பதிவு செய்ய முதல் பில்லை உருவாக்கவும்.',
+    viewDetails: 'பில் விவரங்களைப் பார்க்கவும்',
+    printBill: 'பில்லை அச்சிடவும் அல்லது மீண்டும் அச்சிடவும்',
+    deleteBill: 'பில்லை நீக்கு (நிர்வாகிக்கு மட்டும்)',
+    deleteError: 'பில்லை நீக்க முடியவில்லை.',
+    deleteTitle: 'இந்தப் பில்லை நிரந்தரமாக நீக்கவிரும்புகிறீர்களா?',
+    deleteWarning: 'இந்தப் பில் உள்ள சேமிப்பிலிருந்து நிரந்தரமாக நீக்கப்படும். இந்தச் செயல் தணிக்கைப் பதிவில் பதிவு செய்யப்படும்.',
+    deletePermanently: 'நிரந்தரமாக நீக்கு',
+    billDeleted: 'பில் {number} நிரந்தரமாக நீக்கப்பட்டது.',
+  },
+} as const;
+
 export const BillHistory: React.FC = () => {
   const { currentUser, isAdmin } = useAuth();
-  const { settings } = useSettings();
+  const { settings, language, t } = useSettings();
+  const copy = COPY[language];
   const bills = useLiveQuery(() => db.bills.orderBy('createdAt').reverse().toArray(), []) || [];
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,7 +61,6 @@ export const BillHistory: React.FC = () => {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
 
-  // Modals state
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [printBill, setPrintBill] = useState<Bill | null>(null);
@@ -43,31 +69,28 @@ export const BillHistory: React.FC = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
 
-  // Filter bills
-  const filteredBills = bills.filter((b) => {
-    // 1. Search Query
+  const filteredBills = bills.filter((bill) => {
     const search = searchTerm.toLowerCase();
     const matchesSearch =
-      b.billNumber.toLowerCase().includes(search) ||
-      b.customer.name.toLowerCase().includes(search) ||
-      (b.customer.mobile && b.customer.mobile.includes(search)) ||
-      b.items.some((it) => it.productName.toLowerCase().includes(search));
+      bill.billNumber.toLowerCase().includes(search) ||
+      bill.customer.name.toLowerCase().includes(search) ||
+      (bill.customer.mobile && bill.customer.mobile.includes(search)) ||
+      bill.items.some((item) => item.productName.toLowerCase().includes(search));
 
     if (!matchesSearch) return false;
 
-    // 2. Date Filtering
-    const todayStr = getTodayDateString();
-    const billDate = b.date;
+    const todayString = getTodayDateString();
+    const billDate = bill.date;
 
     if (dateFilter === 'today') {
-      return billDate === todayStr;
+      return billDate === todayString;
     }
 
     if (dateFilter === 'yesterday') {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      const yestStr = yesterday.toISOString().split('T')[0];
-      return billDate === yestStr;
+      const yesterdayString = yesterday.toISOString().split('T')[0];
+      return billDate === yesterdayString;
     }
 
     if (dateFilter === 'this_week') {
@@ -77,9 +100,9 @@ export const BillHistory: React.FC = () => {
     }
 
     if (dateFilter === 'this_month') {
-      const firstDayMonth = new Date();
-      firstDayMonth.setDate(1);
-      return new Date(billDate) >= firstDayMonth;
+      const firstDayOfMonth = new Date();
+      firstDayOfMonth.setDate(1);
+      return new Date(billDate) >= firstDayOfMonth;
     }
 
     if (dateFilter === 'custom') {
@@ -91,242 +114,237 @@ export const BillHistory: React.FC = () => {
     return true;
   });
 
+  const paymentLabel = (method: PaymentMethod): string => {
+    if (method === 'Cash') return t.paymentCash;
+    if (method === 'UPI') return t.paymentUpi;
+    if (method === 'Card') return t.paymentCard;
+    if (method === 'Bank Transfer') return t.bank;
+    if (method === 'Credit') return t.paymentCredit;
+    return t.other;
+  };
+
   const handleDeleteBill = async () => {
     if (!billToDelete) return;
 
     try {
-      // 1. Delete bill permanently from IndexedDB
       await db.bills.delete(billToDelete.id);
-
-      // 2. Recalculate global bill sequence so next auto number stays correct
       await recalculateGlobalSequence();
 
-      // 3. Add Audit Log
+      const auditTimestamp = new Date();
       await db.auditLogs.add({
         id: `audit_${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        date: formatDate(new Date()),
-        time: formatTime(new Date()),
+        timestamp: auditTimestamp.toISOString(),
+        date: formatDate(auditTimestamp, language),
+        time: formatTime(auditTimestamp, language),
         user: currentUser?.username || 'admin',
         role: 'ADMIN',
         action: 'Deleted Bill',
         recordType: 'BILL',
         recordId: billToDelete.billNumber,
-        details: `Deleted bill ${billToDelete.billNumber} for ${billToDelete.customer.name} (₹${billToDelete.grandTotal})`
+        details: `Deleted bill ${billToDelete.billNumber} for ${billToDelete.customer.name} (${formatCurrency(billToDelete.grandTotal, language)})`,
       });
 
-      setFeedback(`Bill ${billToDelete.billNumber} has been permanently deleted.`);
+      setFeedback(copy.billDeleted.replace('{number}', billToDelete.billNumber));
       setIsDeleteOpen(false);
       setBillToDelete(null);
       setTimeout(() => setFeedback(''), 4000);
     } catch (err) {
       console.error('Failed to delete bill:', err);
-      alert('Error deleting bill');
+      alert(copy.deleteError);
     }
   };
 
+  const dateFilters: { id: DateFilter; label: string }[] = [
+    { id: 'all', label: copy.allBills },
+    { id: 'today', label: t.today },
+    { id: 'yesterday', label: copy.yesterday },
+    { id: 'this_week', label: t.thisWeek },
+    { id: 'this_month', label: t.thisMonth },
+    { id: 'custom', label: t.customRange },
+  ];
+
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-8">
-      {/* Header Banner with Agricultural Photo */}
-      <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-agri-gold/50 text-white min-h-[110px] p-5 flex flex-wrap items-center justify-between gap-3">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-30 scale-105"
-          style={{ backgroundImage: "url('/images/farmer_bullock_ploughing.jpg')" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-agri-950/95 via-emerald-950/90 to-agri-950/95" />
-
-        <div className="relative z-10 flex items-center space-x-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-agri-gold to-yellow-500 text-agri-950 flex items-center justify-center font-bold text-xl shadow-lg border border-white/40">
-            📜
-          </div>
-          <div>
-            <div className="flex items-center space-x-2 flex-wrap">
-              <h2 className="text-xl font-black text-white tracking-tight font-serif uppercase">
-                விற்பனை ரசீது வரலாறு (BILL HISTORY &amp; ARCHIVE)
-              </h2>
-              <span className="bg-yellow-400 text-agri-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
-                {bills.length} Bills
-              </span>
+    <div className="mx-auto max-w-7xl space-y-5 pb-8">
+      <section
+        className="card-glass relative overflow-hidden border-primary-200 bg-gradient-to-br from-primary-50 via-surface to-secondary-50 p-5"
+        aria-labelledby="bill-history-title"
+      >
+        <div className="pointer-events-none absolute -right-10 -top-14 h-44 w-44 rounded-full bg-primary-100/70 blur-2xl" aria-hidden="true" />
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary-200 bg-white text-secondary-700 shadow-soft-sm">
+              <History size={23} aria-hidden="true" />
             </div>
-            <p className="text-xs text-emerald-200 mt-0.5">
-              விவசாயிகளின் நிரந்தர விற்பனை பதிவேடு • ரசீதுகள் பாதுகாப்பாக சேமிக்கப்பட்டுள்ளன
-            </p>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 id="bill-history-title" className="section-title text-xl font-semibold sm:text-2xl">
+                  {t.billHistory}
+                </h2>
+                <span className="badge-arch">{formatNumber(bills.length, language)}</span>
+              </div>
+              <p className="mt-0.5 text-xs text-text-secondary sm:text-sm">{copy.historySubtitle}</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-primary-200 bg-white/80 px-3.5 py-2 text-xs font-medium text-text-secondary shadow-soft-sm">
+            {copy.totalBills}:{' '}
+            <strong className="ml-1 font-mono text-sm text-secondary-700">{formatNumber(bills.length, language)}</strong>
           </div>
         </div>
-
-        <div className="relative z-10 text-xs text-yellow-200 bg-black/40 px-3.5 py-2 rounded-2xl border border-yellow-400/40 font-bold">
-          மொத்த ரசீதுகள்: <strong className="text-yellow-300 font-mono text-sm">{bills.length}</strong>
-        </div>
-      </div>
+      </section>
 
       {feedback && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 animate-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="toast toast-success static relative w-full" role="status" aria-live="polite">
+          <CheckCircle2 size={17} className="shrink-0 text-success" aria-hidden="true" />
           <span>{feedback}</span>
         </div>
       )}
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-4 space-y-3">
-        <div className="flex flex-col md:flex-row gap-3">
-          {/* Search Input */}
+      <section className="card-glass space-y-3 p-4" aria-label={`${t.search} & ${t.filter}`}>
+        <div className="flex flex-col gap-3 lg:flex-row">
           <div className="relative flex-1">
-            <Search className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search size={19} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-700" aria-hidden="true" />
             <input
-              type="text"
+              type="search"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by Bill Number (e.g. AST-...), Customer Name, Mobile, or Product..."
-              className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-agri-600 outline-none"
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder={copy.searchPlaceholder}
+              className="input-arch pl-11"
+              aria-label={copy.searchPlaceholder}
             />
           </div>
 
-          {/* Quick Date Range Buttons */}
-          <div className="flex items-center space-x-1.5 overflow-x-auto text-xs">
-            {[
-              { id: 'all', label: 'All Bills' },
-              { id: 'today', label: 'Today' },
-              { id: 'yesterday', label: 'Yesterday' },
-              { id: 'this_week', label: 'This Week' },
-              { id: 'this_month', label: 'This Month' },
-              { id: 'custom', label: 'Custom Range' },
-            ].map((f) => (
+          <div className="flex items-center gap-1.5 overflow-x-auto" role="group" aria-label={t.filterRange}>
+            {dateFilters.map((filter) => (
               <button
-                key={f.id}
-                onClick={() => setDateFilter(f.id as DateFilter)}
-                className={`px-3 py-2 rounded-xl font-medium whitespace-nowrap transition-colors ${
-                  dateFilter === f.id
-                    ? 'bg-agri-700 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                key={filter.id}
+                type="button"
+                onClick={() => setDateFilter(filter.id)}
+                aria-pressed={dateFilter === filter.id}
+                className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  dateFilter === filter.id
+                    ? 'border-primary-900 bg-primary-900 text-white'
+                    : 'border-primary-100 bg-white text-text-secondary hover:border-primary-300 hover:bg-primary-50'
                 }`}
               >
-                {f.label}
+                {filter.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Custom Date Pickers */}
         {dateFilter === 'custom' && (
-          <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-3 text-xs bg-agri-50/50 p-2.5 rounded-xl">
-            <span className="font-bold text-gray-700">Date Range:</span>
-            <div className="flex items-center space-x-1.5">
-              <span>From:</span>
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary-100 bg-primary-50/70 p-3 text-xs">
+            <span className="font-semibold text-text-secondary">{t.dateRange}:</span>
+            <label className="flex items-center gap-1.5 text-text-secondary">
+              <span>{t.from}:</span>
               <input
                 type="date"
                 value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg outline-none font-mono text-xs"
+                onChange={(event) => setCustomStartDate(event.target.value)}
+                className="input-arch w-auto py-1.5 font-mono text-xs"
               />
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <span>To:</span>
+            </label>
+            <label className="flex items-center gap-1.5 text-text-secondary">
+              <span>{t.to}:</span>
               <input
                 type="date"
                 value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="px-2.5 py-1.5 bg-white border border-gray-300 rounded-lg outline-none font-mono text-xs"
+                onChange={(event) => setCustomEndDate(event.target.value)}
+                className="input-arch w-auto py-1.5 font-mono text-xs"
               />
-            </div>
+            </label>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Bill History Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 overflow-hidden">
+      <section className="card-glass overflow-hidden" aria-label={t.billHistory}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-agri-900 text-white text-xs uppercase tracking-wider">
+          <table className="table-arch min-w-[980px]">
+            <caption className="sr-only">{t.billHistory}</caption>
+            <thead>
               <tr>
-                <th className="py-3 px-3 text-center w-12">S.No</th>
-                <th className="py-3 px-3">Bill No</th>
-                <th className="py-3 px-3">Date & Time</th>
-                <th className="py-3 px-4">Customer</th>
-                <th className="py-3 px-3 text-center">Items</th>
-                <th className="py-3 px-3 text-center">Payment</th>
-                <th className="py-3 px-4 text-right">Grand Total</th>
-                <th className="py-3 px-4 text-center">Actions</th>
+                <th scope="col" className="w-12 text-center">#</th>
+                <th scope="col">{t.billNo}</th>
+                <th scope="col">{t.dateTime}</th>
+                <th scope="col">{t.customerName}</th>
+                <th scope="col" className="text-center">{t.items}</th>
+                <th scope="col" className="text-center">{t.paymentMethod}</th>
+                <th scope="col" className="text-right">{t.grandTotal}</th>
+                <th scope="col" className="text-center">{t.actions}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody>
               {filteredBills.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-gray-400">
-                    <p className="text-sm font-semibold">No bills found.</p>
-                    <p className="text-xs mt-1">
-                      Create your first bill to start tracking sales.
-                    </p>
+                  <td colSpan={8} className="py-12 text-center">
+                    <History size={30} className="mx-auto mb-2 text-secondary-700" aria-hidden="true" />
+                    <p className="text-sm font-semibold text-text-secondary">{t.noBills}</p>
+                    <p className="mt-1 text-xs text-text-tertiary">{copy.emptyHint}</p>
                   </td>
                 </tr>
               ) : (
-                filteredBills.map((b, idx) => (
-                  <tr key={b.id} className="hover:bg-agri-50/50 transition-colors">
-                    <td className="py-3 px-3 text-center font-semibold text-gray-500">
-                      {idx + 1}
+                filteredBills.map((bill, index) => (
+                  <tr key={bill.id}>
+                    <td className="text-center font-semibold text-text-tertiary">{formatNumber(index + 1, language)}</td>
+                    <td className="font-mono font-semibold text-secondary-700">{bill.billNumber}</td>
+                    <td className="text-xs text-text-secondary">
+                      <div>{formatDate(bill.date, language)}</div>
+                      <div className="font-mono text-[10px] text-text-tertiary">{formatTime(bill.time, language)}</div>
                     </td>
-                    <td className="py-3 px-3 font-mono font-bold text-agri-800">
-                      {b.billNumber}
-                    </td>
-                    <td className="py-3 px-3 text-xs text-gray-600">
-                      <div>{formatDate(b.date)}</div>
-                      <div className="text-[10px] text-gray-400 font-mono">{formatTime(b.time)}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-gray-900">{b.customer.name}</div>
-                      {b.customer.mobile && (
-                        <div className="text-xs text-gray-500 font-mono">{b.customer.mobile}</div>
+                    <td>
+                      <div className="font-semibold text-primary-900">{bill.customer.name}</div>
+                      {bill.customer.mobile && (
+                        <div className="font-mono text-xs text-text-tertiary">{bill.customer.mobile}</div>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-center">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
-                        {b.items.length} items
-                      </span>
+                    <td className="text-center">
+                      <span className="badge-arch">{formatNumber(bill.items.length, language)}</span>
                     </td>
-                    <td className="py-3 px-3 text-center">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-agri-50 text-agri-800 border border-agri-200">
-                        {b.paymentMethod}
-                      </span>
+                    <td className="text-center"><span className="badge-info">{paymentLabel(bill.paymentMethod)}</span></td>
+                    <td className="text-right font-mono text-sm font-semibold text-primary-900">
+                      {formatCurrency(bill.grandTotal, language)}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-gray-900 text-sm">
-                      {formatCurrency(b.grandTotal)}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        {/* View Original Snapshot */}
+                    <td className="text-center">
+                      <div className="flex items-center justify-center gap-1">
                         <button
+                          type="button"
                           onClick={() => {
-                            setSelectedBill(b);
+                            setSelectedBill(bill);
                             setIsDetailsOpen(true);
                           }}
-                          className="p-1.5 rounded-lg text-agri-700 hover:text-agri-900 hover:bg-agri-100 transition-colors"
-                          title="View Bill Details"
+                          className="btn-light p-2 text-secondary-700"
+                          title={copy.viewDetails}
+                          aria-label={`${copy.viewDetails}: ${bill.billNumber}`}
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye size={15} aria-hidden="true" />
                         </button>
 
-                        {/* Print / Reprint */}
                         <button
+                          type="button"
                           onClick={() => {
-                            setPrintBill(b);
+                            setPrintBill(bill);
                             setIsPrintOpen(true);
                           }}
-                          className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-                          title="Print / Reprint Bill"
+                          className="btn-light p-2 text-secondary-700"
+                          title={copy.printBill}
+                          aria-label={`${copy.printBill}: ${bill.billNumber}`}
                         >
-                          <Printer className="w-4 h-4" />
+                          <Printer size={15} aria-hidden="true" />
                         </button>
 
-                        {/* Admin Delete Only */}
                         {isAdmin && (
                           <button
+                            type="button"
                             onClick={() => {
-                              setBillToDelete(b);
+                              setBillToDelete(bill);
                               setIsDeleteOpen(true);
                             }}
-                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
-                            title="Delete Bill (Admin Only)"
+                            className="btn-light p-2 text-error hover:text-red-800"
+                            title={copy.deleteBill}
+                            aria-label={`${copy.deleteBill}: ${bill.billNumber}`}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 size={15} aria-hidden="true" />
                           </button>
                         )}
                       </div>
@@ -337,9 +355,8 @@ export const BillHistory: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      {/* Bill Details Modal */}
       <BillDetailsModal
         isOpen={isDetailsOpen}
         bill={selectedBill}
@@ -360,7 +377,6 @@ export const BillHistory: React.FC = () => {
         }}
       />
 
-      {/* Print Modal */}
       <PrintModal
         isOpen={isPrintOpen}
         bill={printBill}
@@ -371,21 +387,20 @@ export const BillHistory: React.FC = () => {
         }}
       />
 
-      {/* Delete Confirmation Modal strictly matching Section 4 */}
       <ConfirmModal
         isOpen={isDeleteOpen}
-        title="WARNING: Delete Bill Permanently"
-        warningText="This bill will be permanently deleted from local IndexedDB storage. This operation is recorded in the audit log."
+        title={copy.deleteTitle}
+        warningText={copy.deleteWarning}
         billDetails={
           billToDelete
             ? {
                 billNumber: billToDelete.billNumber,
                 customerName: billToDelete.customer.name,
-                amount: formatCurrency(billToDelete.grandTotal),
+                amount: formatCurrency(billToDelete.grandTotal, language),
               }
             : undefined
         }
-        confirmLabel="Delete Permanently"
+        confirmLabel={copy.deletePermanently}
         confirmButtonColor="red"
         requirePassword={true}
         onConfirm={handleDeleteBill}

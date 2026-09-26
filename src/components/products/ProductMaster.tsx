@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 import { formatCurrency } from '../../utils/currency';
 import { formatDate, formatTime } from '../../utils/date';
+import { formatNumber, formatUnit } from '../../utils/i18n';
 import { ProductModal } from './ProductModal';
 import { ConfirmModal } from '../common/ConfirmModal';
-import type { Product, ProductCategory } from '../../types';
+import type { Product, ProductCategory, UnitType } from '../../types';
 import {
   Boxes,
   Plus,
@@ -16,7 +18,7 @@ import {
   ShieldAlert,
   CheckCircle2,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
 
 const CATEGORIES: ('All' | ProductCategory)[] = [
@@ -31,11 +33,85 @@ const CATEGORIES: ('All' | ProductCategory)[] = [
   'Crop Protection',
   'Bio-Fertilizers',
   'Farming Accessories',
-  'Other'
+  'Other',
 ];
+
+const CATEGORY_LABEL_KEYS: Record<ProductCategory, string> = {
+  Seeds: 'catSeeds',
+  Fertilizers: 'catFertilizers',
+  Pesticides: 'catPesticides',
+  'Organic Manure': 'catOrganicManure',
+  'Agricultural Tools': 'catAgriTools',
+  'Irrigation Equipment': 'catIrrigation',
+  'Plant Growth Products': 'catPlantGrowth',
+  'Crop Protection': 'catCropProtection',
+  'Bio-Fertilizers': 'catBioFertilizers',
+  'Farming Accessories': 'catFarmingAccessories',
+  Other: 'catOther',
+};
+
+const UNIT_LABELS = {
+  en: {
+    kg: 'kg',
+    gram: 'gram',
+    quintal: 'quintal',
+    ton: 'ton',
+    bag: 'bag',
+    litre: 'litre',
+    ml: 'ml',
+    piece: 'piece',
+    box: 'box',
+    packet: 'packet',
+    bundle: 'bundle',
+    set: 'set',
+  },
+  ta: {
+    kg: 'கிலோ',
+    gram: 'கிராம்',
+    quintal: 'குவிண்டல்',
+    ton: 'டன்',
+    bag: 'பை',
+    litre: 'லிட்டர்',
+    ml: 'மில்லி',
+    piece: 'துண்டு',
+    box: 'பெட்டி',
+    packet: 'பாக்கெட்',
+    bundle: 'கட்டு',
+    set: 'தொகுதி',
+  },
+} as const;
+
+const COPY = {
+  en: {
+    catalogSubtitle: 'Quality seeds, fertilizers, crop care and modern farm equipment',
+    operatorMode: 'Operator mode: only an administrator can edit prices',
+    searchPlaceholder: 'Search products by name, category, or HSN code...',
+    items: 'items',
+    serialNo: 'S.No.',
+    productName: 'Product name',
+    deleteTitle: 'Delete product',
+    deleteHeading: 'Delete agricultural product',
+    deleteWarning: 'Permanently delete “{name}” from Product Master?',
+    deleteDetails: 'Existing historical bills will retain their original price and product-name snapshots.',
+  },
+  ta: {
+    catalogSubtitle: 'தரமான விதைகள், உரங்கள், பயிர் பாதுகாப்பு மற்றும் நவீன வேளாண் உபகரணங்கள்',
+    operatorMode: 'ஆபரேட்டர் முறை: விலையை நிர்வாகி மட்டுமே திருத்தலாம்',
+    searchPlaceholder: 'பெயர், வகை அல்லது HSN குறியீடு மூலம் பொருட்களைத் தேடுங்கள்...',
+    items: 'பொருட்கள்',
+    serialNo: 'வரிசை எண்',
+    productName: 'பொருளின் பெயர்',
+    deleteTitle: 'பொருளை நீக்கு',
+    deleteHeading: 'வேளாண் பொருளை நீக்கு',
+    deleteWarning: '“{name}” என்ற பொருளை பொருட்கள் பட்டியலிலிருந்து நிரந்தரமாக நீக்க விரும்புகிறீர்களா?',
+    deleteDetails: 'ஏற்கனவே உள்ள வரலாற்றுப் பில்களில் அசல் விலை மற்றும் பொருள் பெயர் விவரங்கள் தக்கவைக்கப்படும்.',
+  },
+} as const;
 
 export const ProductMaster: React.FC = () => {
   const { currentUser, isAdmin } = useAuth();
+  const { language, t } = useSettings();
+  const copy = COPY[language];
   const products = useLiveQuery(() => db.products.toArray(), []) || [];
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,14 +122,19 @@ export const ProductMaster: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState('');
 
-  // Filter products
-  const filteredProducts = products.filter((p) => {
-    const matchesCat = selectedCategory === 'All' || p.category === selectedCategory;
+  const categoryLabel = (category: 'All' | ProductCategory): string =>
+    category === 'All' ? t.catAll : t[CATEGORY_LABEL_KEYS[category]];
+  const unitLabel = (unit: UnitType): string => UNIT_LABELS[language][unit];
+
+  const filteredProducts = products.filter((product) => {
+    const query = searchTerm.toLowerCase();
+    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
     const matchesSearch =
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.hsnCode && p.hsnCode.includes(searchTerm)) ||
-      p.category.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCat && matchesSearch;
+      product.name.toLowerCase().includes(query) ||
+      (product.hsnCode && product.hsnCode.includes(searchTerm)) ||
+      product.category.toLowerCase().includes(query) ||
+      categoryLabel(product.category).toLowerCase().includes(query);
+    return matchesCategory && matchesSearch;
   });
 
   const handleOpenAdd = () => {
@@ -61,13 +142,14 @@ export const ProductMaster: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleOpenEdit = (p: Product) => {
-    setEditingProduct(p);
+  const handleOpenEdit = (product: Product) => {
+    setEditingProduct(product);
     setIsModalOpen(true);
   };
 
   const handleSaveProduct = async (data: Partial<Product>) => {
-    const now = new Date().toISOString();
+    const auditTimestamp = new Date();
+    const now = auditTimestamp.toISOString();
 
     if (editingProduct) {
       const oldPrice = editingProduct.price;
@@ -75,62 +157,49 @@ export const ProductMaster: React.FC = () => {
 
       await db.products.update(editingProduct.id, {
         ...data,
-        updatedAt: now
+        updatedAt: now,
       });
 
-      // If price was modified, record dedicated price change audit log
-      if (oldPrice !== newPrice) {
-        await db.auditLogs.add({
-          id: `audit_${Date.now()}`,
-          timestamp: now,
-          date: formatDate(new Date()),
-          time: formatTime(new Date()),
-          user: currentUser?.username || 'admin',
-          role: 'ADMIN',
-          action: 'Changed product price',
-          recordType: 'PRODUCT',
-          recordId: editingProduct.id,
-          details: `Changed ${editingProduct.name} price: ₹${oldPrice.toFixed(2)} → ₹${newPrice.toFixed(2)}`
-        });
-      } else {
-        await db.auditLogs.add({
-          id: `audit_${Date.now()}`,
-          timestamp: now,
-          date: formatDate(new Date()),
-          time: formatTime(new Date()),
-          user: currentUser?.username || 'admin',
-          role: 'ADMIN',
-          action: 'Updated product details',
-          recordType: 'PRODUCT',
-          recordId: editingProduct.id,
-          details: `Updated ${editingProduct.name}`
-        });
-      }
+      await db.auditLogs.add({
+        id: `audit_${Date.now()}`,
+        timestamp: now,
+        date: formatDate(auditTimestamp, language),
+        time: formatTime(auditTimestamp, language),
+        user: currentUser?.username || 'admin',
+        role: 'ADMIN',
+        action: oldPrice !== newPrice ? 'Changed product price' : 'Updated product details',
+        recordType: 'PRODUCT',
+        recordId: editingProduct.id,
+        details:
+          oldPrice !== newPrice
+            ? `Changed ${editingProduct.name} price: ${formatCurrency(oldPrice, language)} → ${formatCurrency(newPrice, language)}`
+            : `Updated ${editingProduct.name}`,
+      });
 
-      setFeedbackMsg(`Product "${data.name}" updated successfully.`);
+      setFeedbackMsg(`${t.productUpdatedMsg} ${data.name || editingProduct.name}`);
     } else {
       const newId = `prod_${Date.now()}`;
       await db.products.add({
         ...(data as Product),
         id: newId,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
       });
 
       await db.auditLogs.add({
         id: `audit_${Date.now()}`,
         timestamp: now,
-        date: formatDate(new Date()),
-        time: formatTime(new Date()),
+        date: formatDate(auditTimestamp, language),
+        time: formatTime(auditTimestamp, language),
         user: currentUser?.username || 'admin',
         role: 'ADMIN',
         action: 'Created new product',
         recordType: 'PRODUCT',
         recordId: newId,
-        details: `Created product ${data.name} @ ₹${data.price} (${data.category})`
+        details: `Created product ${data.name} @ ${formatCurrency(data.price, language)} (${data.category})`,
       });
 
-      setFeedbackMsg(`New product "${data.name}" added successfully.`);
+      setFeedbackMsg(`${t.productAddedMsg} ${data.name || ''}`.trim());
     }
 
     setTimeout(() => setFeedbackMsg(''), 4000);
@@ -139,212 +208,205 @@ export const ProductMaster: React.FC = () => {
   const handleDeleteProduct = async () => {
     if (!deletingProduct) return;
 
+    const auditTimestamp = new Date();
     await db.products.delete(deletingProduct.id);
 
     await db.auditLogs.add({
       id: `audit_${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      date: formatDate(new Date()),
-      time: formatTime(new Date()),
+      timestamp: auditTimestamp.toISOString(),
+      date: formatDate(auditTimestamp, language),
+      time: formatTime(auditTimestamp, language),
       user: currentUser?.username || 'admin',
       role: 'ADMIN',
       action: 'Deleted product',
       recordType: 'PRODUCT',
       recordId: deletingProduct.id,
-      details: `Deleted product ${deletingProduct.name} (${deletingProduct.category})`
+      details: `Deleted product ${deletingProduct.name} (${deletingProduct.category})`,
     });
 
     setIsDeleteModalOpen(false);
     setDeletingProduct(null);
-    setFeedbackMsg(`Product "${deletingProduct.name}" removed from catalog.`);
+    setFeedbackMsg(`${t.productDeletedMsg} ${deletingProduct.name}`);
     setTimeout(() => setFeedbackMsg(''), 4000);
   };
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-8">
-      {/* Header Banner with Agricultural Photo */}
-      <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-agri-gold/50 text-white min-h-[110px] p-5 flex flex-wrap items-center justify-between gap-3">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-30 scale-105"
-          style={{ backgroundImage: "url('/images/tractor_spraying_crops.jpg')" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-agri-950/95 via-emerald-950/90 to-agri-950/95" />
-
-        <div className="relative z-10 flex items-center space-x-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-agri-gold to-yellow-500 text-agri-950 flex items-center justify-center font-bold text-xl shadow-lg border border-white/40">
-            🌾
-          </div>
-          <div>
-            <div className="flex items-center space-x-2 flex-wrap">
-              <h2 className="text-xl font-black text-white tracking-tight font-serif">
-                வேளாண் பொருட்கள் பட்டியல் (PRODUCT MASTER)
-              </h2>
-              <span className="bg-yellow-400 text-agri-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
-                {products.length} Items
-              </span>
+    <div className="mx-auto max-w-7xl space-y-5 pb-8">
+      <section
+        className="card-glass relative overflow-hidden border-primary-200 bg-gradient-to-br from-primary-50 via-surface to-secondary-50 p-5"
+        aria-labelledby="product-master-title"
+      >
+        <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-primary-100/60 blur-2xl" aria-hidden="true" />
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary-200 bg-white text-secondary-700 shadow-soft-sm">
+              <Boxes size={23} aria-hidden="true" />
             </div>
-            <p className="text-xs text-emerald-200 mt-0.5">
-              பாரம்பரிய நாட்டு விதைகள், உரங்கள், பூச்சிக்கொல்லிகள் & நவீன வேளாண் கருவிகள்
-            </p>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 id="product-master-title" className="section-title text-xl font-semibold sm:text-2xl">
+                  {t.products}
+                </h2>
+                <span className="badge-arch">
+                  {formatNumber(products.length, language)} {copy.items}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-text-secondary sm:text-sm">{copy.catalogSubtitle}</p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center space-x-2">
           {isAdmin ? (
-            <button
-              onClick={handleOpenAdd}
-              className="flex items-center space-x-1.5 px-4 py-2 bg-agri-700 hover:bg-agri-800 text-white font-bold text-xs rounded-xl shadow transition-all active:scale-95"
-            >
-              <Plus className="w-4 h-4 text-agri-gold" />
-              <span>Add New Product</span>
+            <button type="button" onClick={handleOpenAdd} className="btn-primary px-4 py-2.5 text-xs">
+              <Plus size={16} aria-hidden="true" />
+              <span>{t.addProductTitle}</span>
             </button>
           ) : (
-            <div className="flex items-center space-x-1 text-xs text-amber-800 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
-              <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <span>Operator Mode: Price editing restricted to Admin</span>
+            <div className="flex max-w-md items-center gap-2 rounded-xl border border-warning/30 bg-warning-bg px-3 py-2 text-xs font-medium text-warning" role="status">
+              <ShieldAlert size={16} className="shrink-0" aria-hidden="true" />
+              <span>{copy.operatorMode}</span>
             </div>
           )}
         </div>
-      </div>
+      </section>
 
       {feedbackMsg && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 animate-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="toast toast-success static relative w-full" role="status" aria-live="polite">
+          <CheckCircle2 size={17} className="shrink-0 text-success" aria-hidden="true" />
           <span>{feedbackMsg}</span>
         </div>
       )}
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-4 space-y-3">
+      <section className="card-glass space-y-3 p-4" aria-label={t.search}>
         <div className="relative">
-          <Search className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search size={19} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-700" aria-hidden="true" />
           <input
-            type="text"
+            type="search"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search agricultural products by name, category, or HSN code..."
-            className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-agri-600 outline-none"
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder={copy.searchPlaceholder}
+            className="input-arch pl-11"
+            aria-label={t.searchProductPlaceholder}
           />
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs">
-          {CATEGORIES.map((cat) => (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1" role="group" aria-label={t.productCategory}>
+          {CATEGORIES.map((category) => (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === cat
-                  ? 'bg-agri-700 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              key={category}
+              type="button"
+              onClick={() => setSelectedCategory(category)}
+              aria-pressed={selectedCategory === category}
+              className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                selectedCategory === category
+                  ? 'border-primary-900 bg-primary-900 text-white'
+                  : 'border-primary-100 bg-white text-text-secondary hover:border-primary-300 hover:bg-primary-50'
               }`}
             >
-              {cat}
+              {categoryLabel(category)}
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Products Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 overflow-hidden">
+      <section className="card-glass overflow-hidden" aria-label={t.products}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-agri-900 text-white text-xs uppercase tracking-wider">
+          <table className="table-arch min-w-[980px]">
+            <caption className="sr-only">{t.products}</caption>
+            <thead>
               <tr>
-                <th className="py-3 px-3 text-center w-12">S.No</th>
-                <th className="py-3 px-4">Product Name</th>
-                <th className="py-3 px-3 hidden md:table-cell">Category</th>
-                <th className="py-3 px-3 text-center w-20">Unit</th>
-                <th className="py-3 px-4 text-right w-32">Fixed Rate (₹)</th>
-                <th className="py-3 px-3 text-center w-24">GST %</th>
-                <th className="py-3 px-3 text-center w-24 hidden lg:table-cell">HSN</th>
-                <th className="py-3 px-3 text-center w-24">Status</th>
-                <th className="py-3 px-4 text-center w-28">Actions</th>
+                <th scope="col" className="w-12 text-center">{copy.serialNo}</th>
+                <th scope="col">{copy.productName}</th>
+                <th scope="col" className="hidden md:table-cell">{t.productCategory}</th>
+                <th scope="col" className="w-20 text-center">{t.unit}</th>
+                <th scope="col" className="w-36 text-right">{t.fixedRate}</th>
+                <th scope="col" className="w-24 text-center">{t.gstRate}</th>
+                <th scope="col" className="hidden w-24 text-center lg:table-cell">HSN</th>
+                <th scope="col" className="w-28 text-center">{t.status}</th>
+                <th scope="col" className="w-28 text-center">{t.actions}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody>
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-gray-400">
-                    <p className="text-sm font-semibold">No products configured.</p>
-                    <p className="text-xs mt-1">Admin can add products using the button above.</p>
+                  <td colSpan={9} className="py-12 text-center">
+                    <Boxes size={30} className="mx-auto mb-2 text-secondary-700" aria-hidden="true" />
+                    <p className="text-sm font-semibold text-text-secondary">{t.noProducts}</p>
+                    <p className="mt-1 text-xs text-text-tertiary">{t.adminAddProducts}</p>
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map((prod, idx) => (
-                  <tr key={prod.id} className="hover:bg-agri-50/50 transition-colors">
-                    <td className="py-3 px-3 text-center font-semibold text-gray-500">
-                      {idx + 1}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-gray-900">{prod.name}</div>
-                      {prod.stockQuantity !== undefined && (
-                        <div className="text-[11px] text-gray-500 flex items-center space-x-1 mt-0.5">
-                          <span>Stock: {prod.stockQuantity} {prod.unit}</span>
-                          {prod.minStockAlert && prod.stockQuantity <= prod.minStockAlert && (
-                            <span className="text-rose-600 font-bold flex items-center space-x-0.5">
-                              <AlertTriangle className="w-3 h-3" />
-                              <span>Low Stock</span>
+                filteredProducts.map((product, index) => (
+                  <tr key={product.id}>
+                    <td className="text-center font-semibold text-text-tertiary">{formatNumber(index + 1, language)}</td>
+                    <td>
+                      <div className="font-semibold text-primary-900">{product.name}</div>
+                      {product.stockQuantity !== undefined && (
+                        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-text-tertiary">
+                          <span>
+                            {t.stockLeft}: {formatNumber(product.stockQuantity, language)} {unitLabel(product.unit)}
+                          </span>
+                          {product.minStockAlert && product.stockQuantity <= product.minStockAlert && (
+                            <span className="inline-flex items-center gap-1 font-semibold text-warning">
+                              <AlertTriangle size={12} aria-hidden="true" />
+                              {t.lowStock}
                             </span>
                           )}
                         </div>
                       )}
                     </td>
-                    <td className="py-3 px-3 hidden md:table-cell">
-                      <span className="text-xs px-2.5 py-1 rounded-full bg-agri-50 text-agri-800 border border-agri-200 font-medium">
-                        {prod.category}
-                      </span>
+                    <td className="hidden md:table-cell">
+                      <span className="badge-arch">{categoryLabel(product.category)}</span>
                     </td>
-                    <td className="py-3 px-3 text-center text-xs font-semibold text-gray-600">
-                      {prod.unit}
+                    <td className="text-center text-xs font-semibold text-text-secondary">{unitLabel(product.unit)}</td>
+                    <td className="text-right font-mono text-sm font-semibold text-primary-900">
+                      {formatCurrency(product.price, language)}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-agri-900 text-sm">
-                      {formatCurrency(prod.price)}
+                    <td className="text-center">
+                      <span className="badge-warning">{formatNumber(product.gstRate, language)}%</span>
                     </td>
-                    <td className="py-3 px-3 text-center">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                        {prod.gstRate}%
-                      </span>
+                    <td className="hidden text-center font-mono text-xs text-text-secondary lg:table-cell">
+                      {product.hsnCode || '—'}
                     </td>
-                    <td className="py-3 px-3 text-center font-mono text-xs text-gray-600 hidden lg:table-cell">
-                      {prod.hsnCode || '-'}
-                    </td>
-                    <td className="py-3 px-3 text-center">
-                      {prod.active ? (
-                        <span className="inline-flex items-center space-x-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Active</span>
+                    <td className="text-center">
+                      {product.active ? (
+                        <span className="badge-success">
+                          <CheckCircle2 size={12} aria-hidden="true" />
+                          {t.active}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center space-x-1 text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                          <XCircle className="w-3 h-3" />
-                          <span>Disabled</span>
+                        <span className="badge-arch">
+                          <XCircle size={12} aria-hidden="true" />
+                          {t.disabled}
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="text-center">
                       {isAdmin ? (
-                        <div className="flex items-center justify-center space-x-1.5">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
-                            onClick={() => handleOpenEdit(prod)}
-                            className="p-1.5 rounded-lg text-agri-700 hover:text-agri-900 hover:bg-agri-100 transition-colors"
-                            title="Edit Price & Details"
+                            type="button"
+                            onClick={() => handleOpenEdit(product)}
+                            className="btn-light p-2 text-secondary-700"
+                            title={t.editProductTitle}
+                            aria-label={`${t.editProductTitle}: ${product.name}`}
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 size={15} aria-hidden="true" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
-                              setDeletingProduct(prod);
+                              setDeletingProduct(product);
                               setIsDeleteModalOpen(true);
                             }}
-                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
-                            title="Delete Product"
+                            className="btn-light p-2 text-error hover:text-red-800"
+                            title={copy.deleteTitle}
+                            aria-label={`${copy.deleteTitle}: ${product.name}`}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 size={15} aria-hidden="true" />
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400 italic">View Only</span>
+                        <span className="text-xs italic text-text-tertiary">{t.viewOnly}</span>
                       )}
                     </td>
                   </tr>
@@ -353,9 +415,8 @@ export const ProductMaster: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      {/* Add / Edit Product Modal */}
       <ProductModal
         isOpen={isModalOpen}
         product={editingProduct}
@@ -363,13 +424,12 @@ export const ProductMaster: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
       />
 
-      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={isDeleteModalOpen}
-        title="Delete Agricultural Product"
-        warningText={`Are you sure you want to permanently delete "${deletingProduct?.name}" from Product Master?`}
-        detailsText="Note: Any existing historical bills will retain their original price and product name snapshot."
-        confirmLabel="Delete Product"
+        title={copy.deleteHeading}
+        warningText={copy.deleteWarning.replace('{name}', deletingProduct?.name || '')}
+        detailsText={copy.deleteDetails}
+        confirmLabel={t.delete}
         confirmButtonColor="red"
         onConfirm={handleDeleteProduct}
         onCancel={() => {

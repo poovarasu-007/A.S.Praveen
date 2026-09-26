@@ -24,10 +24,11 @@ import { AuditLogViewer } from './components/audit/AuditLogViewer';
 import { BillDetailsModal } from './components/history/BillDetailsModal';
 import { PrintModal } from './components/print/PrintModal';
 import type { Bill } from './types';
+import { Wheat } from 'lucide-react';
 
 export const App: React.FC = () => {
   const { currentUser, isLoading } = useAuth();
-  const { settings } = useSettings();
+  const { settings, t } = useSettings();
 
   const [currentSection, setCurrentSection] = useState<NavSection>('billing');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -48,32 +49,18 @@ export const App: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen arch-bg flex flex-col items-center justify-center p-4 relative">
-        {/* Subtle arch radial glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(31,73,89,0.35) 0%, transparent 65%)' }}
-        />
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center animate-float"
-            style={{
-              background: 'linear-gradient(135deg, #1F4959 0%, #2d6275 100%)',
-              border: '1px solid rgba(92,124,137,0.4)',
-              boxShadow: '0 8px 32px rgba(31,73,89,0.5)',
-            }}
-          >
-            <span className="text-2xl">🌾</span>
-          </div>
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-primary-100 bg-primary-900 shadow-soft animate-float" aria-hidden="true"><Wheat size={30} className="text-primary-100" /></div>
           <h2
-            className="font-display font-light text-white text-xl tracking-widest"
-            style={{ letterSpacing: '0.15em' }}
+            className="font-display font-bold text-primary-900 text-xl tracking-wider"
+            style={{ letterSpacing: '0.12em' }}
           >
-            A.S. PRAVEEN TRADERS
+            {t.brandName}
           </h2>
-          <div className="flex items-center gap-2" style={{ color: 'rgba(92,124,137,0.65)' }}>
+          <div className="flex items-center gap-2 text-text-secondary">
             <div className="spinner w-4 h-4" />
-            <span className="text-xs tracking-widest" style={{ letterSpacing: '0.1em' }}>
-              Loading billing database…
+            <span className="text-xs font-medium tracking-wide">
+              {t.loading}
             </span>
           </div>
         </div>
@@ -87,7 +74,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#011425' }} data-select="none">
+    <div className="flex min-h-screen flex-col bg-background text-primary-900">
       {/* Top Header */}
       <Header onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} />
 
@@ -105,7 +92,7 @@ export const App: React.FC = () => {
         />
 
         {/* Dynamic Content View */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 print:p-0 print:overflow-visible" style={{ background: 'rgba(0,8,16,0.5)' }}>
+        <main className="flex-1 overflow-y-auto bg-background p-3 sm:p-4 md:p-6 print:p-0 print:overflow-visible">
           {currentSection === 'dashboard' && (
             <Dashboard
               onNavigateToNewBill={() => setCurrentSection('billing')}

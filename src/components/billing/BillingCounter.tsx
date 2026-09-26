@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db';
 import { getNextBillNumber } from '../../db/sequence';
@@ -7,6 +7,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { formatCurrency, numberToWords } from '../../utils/currency';
 import { formatDate, formatTime, getTodayDateString } from '../../utils/date';
 import { translations } from '../../utils/translations';
+import { formatUnit, interpolate } from '../../utils/i18n';
 import { ProductSelectorModal } from './ProductSelectorModal';
 import { BillSuccessModal } from './BillSuccessModal';
 import { PrintModal } from '../print/PrintModal';
@@ -39,10 +40,35 @@ interface BillingCounterProps {
   onBillCreated?: () => void;
 }
 
+const BILLING_COPY = {
+  en: {
+    customerNamePlaceholder: 'e.g. K. Murugan',
+    mobilePlaceholder: '9876543210',
+    villagePlaceholder: 'e.g. Thanipadi',
+    cropPlaceholder: 'e.g. Paddy / Groundnut',
+    gstinPlaceholder: '33XXXXX...',
+    landAreaPlaceholder: 'e.g. 2.5 Acres',
+    farmerIdPlaceholder: 'Optional GSTIN or Farmer ID',
+    cashTenderedPlaceholder: 'Cash tendered',
+  },
+  ta: {
+    customerNamePlaceholder: 'எ.கா. கே. முருகன்',
+    mobilePlaceholder: '9876543210',
+    villagePlaceholder: 'எ.கா. தாணிப்பாடி',
+    cropPlaceholder: 'எ.கா. நெல் / நிலக்கடலை',
+    gstinPlaceholder: '33XXXXX...',
+    landAreaPlaceholder: 'எ.கா. 2.5 ஏக்கரம்',
+    farmerIdPlaceholder: 'விருப்ப GSTIN அல்லது விவசாயி ID',
+    cashTenderedPlaceholder: 'கொடுத்த ரொக்கம்',
+  },
+} as const;
+
 export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated }) => {
   const { currentUser } = useAuth();
   const { settings, language } = useSettings();
   const t = translations[language];
+  const copy = BILLING_COPY[language];
+  const formatMoney = (amount: number | null | undefined) => formatCurrency(amount, language);
 
   // Live queries for reactive data
   const products = useLiveQuery(() => db.products.toArray(), []) || [];
@@ -187,6 +213,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
         id: `item_${Date.now()}_${items.length + 1}`,
         productId: product.id,
         productName: product.name,
+        hsnCode: product.hsnCode,
         unit: product.unit,
         rate: product.price, // FIXED RATE FROM PRODUCT MASTER
         quantity: initialQty,
@@ -266,26 +293,26 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
     setErrorMessage('');
 
     if (!customerName.trim()) {
-      setErrorMessage('Customer Name is mandatory.');
+      setErrorMessage(t.customerRequired);
       customerInputRef.current?.focus();
       return false;
     }
 
     if (items.length === 0) {
-      setErrorMessage('Please add at least one product to the bill.');
+      setErrorMessage(t.atLeastOneProduct);
       setIsProductModalOpen(true);
       return false;
     }
 
     for (const item of items) {
       if (item.quantity <= 0) {
-        setErrorMessage(`Quantity for "${item.productName}" must be greater than 0.`);
+        setErrorMessage(interpolate(t.quantityGreater, { name: item.productName }));
         return false;
       }
     }
 
     if (isManualBillNo && !manualBillNumber.trim()) {
-      setErrorMessage('Please type a valid manual bill number or switch to Auto mode.');
+      setErrorMessage(t.manualBillRequired);
       return false;
     }
 
@@ -306,7 +333,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
         // Check for duplicate bill number
         const duplicate = await db.bills.where('billNumber').equals(finalBillNumber).first();
         if (duplicate) {
-          setErrorMessage(`Bill number "${finalBillNumber}" already exists in the database! Please enter a unique bill number.`);
+          setErrorMessage(interpolate(t.billNumberExists, { number: finalBillNumber }));
           setIsSaving(false);
           return;
         }
@@ -318,7 +345,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
         id: `bill_${Date.now()}`,
         billNumber: finalBillNumber,
         date: getTodayDateString(),
-        time: formatTime(now),
+        time: formatTime(now, language),
         customer: {
           name: customerName.trim(),
           mobile: customerMobile.trim() || undefined,
@@ -380,8 +407,8 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
       await db.auditLogs.add({
         id: `audit_${Date.now()}`,
         timestamp: now.toISOString(),
-        date: formatDate(now),
-        time: formatTime(now),
+        date: formatDate(now, language),
+        time: formatTime(now, language),
         user: currentUser?.username || 'operator',
         role: currentUser?.role || 'OPERATOR',
         action: 'Created Bill',
@@ -405,7 +432,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
     } catch (err: any) {
       console.error('Error saving bill:', err);
       setErrorMessage(
-        'Unable to save bill to local storage. Please check your browser storage permissions and try again.'
+        t.saveBillError
       );
     } finally {
       setIsSaving(false);
@@ -416,21 +443,21 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
   const getProductBadge = (name: string) => {
     const lower = name.toLowerCase();
     if (lower.includes('seed') || lower.includes('விதை') || lower.includes('paddy') || lower.includes('maize')) {
-      return { icon: '🌱', label: 'Seeds', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
+      return { icon: '🌱', label: t.catSeeds, color: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
     }
     if (lower.includes('urea') || lower.includes('dap') || lower.includes('potash') || lower.includes('npk') || lower.includes('fertilizer') || lower.includes('உரம்')) {
-      return { icon: '🌾', label: 'Fertilizer', color: 'bg-amber-100 text-amber-900 border-amber-300' };
+      return { icon: '🌾', label: t.catFertilizers, color: 'bg-amber-100 text-amber-900 border-amber-300' };
     }
     if (lower.includes('vermi') || lower.includes('neem cake') || lower.includes('organic') || lower.includes('manure')) {
-      return { icon: '🍂', label: 'Organic', color: 'bg-lime-100 text-lime-900 border-lime-300' };
+      return { icon: '🍂', label: t.catOrganicManure, color: 'bg-lime-100 text-lime-900 border-lime-300' };
     }
     if (lower.includes('sprayer') || lower.includes('hoe') || lower.includes('sickle') || lower.includes('gloves') || lower.includes('கருவி')) {
-      return { icon: '🚜', label: 'Tools', color: 'bg-orange-100 text-orange-900 border-orange-300' };
+      return { icon: '🚜', label: t.catAgriTools, color: 'bg-orange-100 text-orange-900 border-orange-300' };
     }
     if (lower.includes('drip') || lower.includes('pipe') || lower.includes('valve') || lower.includes('irrigation')) {
-      return { icon: '💧', label: 'Irrigation', color: 'bg-cyan-100 text-cyan-900 border-cyan-300' };
+      return { icon: '💧', label: t.catIrrigation, color: 'bg-cyan-100 text-cyan-900 border-cyan-300' };
     }
-    return { icon: '🌿', label: 'Agri Input', color: 'bg-teal-100 text-teal-800 border-teal-300' };
+    return { icon: '🌿', label: t.catOther, color: 'bg-teal-100 text-teal-800 border-teal-300' };
   };
 
   return (
@@ -439,8 +466,8 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
       <div
         className="rounded-2xl overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(31,73,89,0.6) 0%, rgba(1,20,37,0.8) 100%)',
-          border: '1px solid rgba(92,124,137,0.25)',
+          background: 'linear-gradient(135deg, var(--color-primary-900) 0%, var(--color-primary-800) 100%)',
+          border: '1px solid #F3FAF0',
         }}
       >
         <div className="p-4 flex flex-wrap items-center justify-between gap-4">
@@ -448,16 +475,16 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
             <div
               className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
               style={{
-                background: 'linear-gradient(135deg, #1F4959 0%, #2d6275 100%)',
-                border: '1px solid rgba(92,124,137,0.4)',
+                background: 'linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-700) 100%)',
+                border: '1px solid rgba(193,230,186,0.35)',
               }}
             >
               🌾
             </div>
             <div>
               <h2 className="font-display font-medium text-white text-lg tracking-wide">{settings.businessName}</h2>
-              <p className="text-xs" style={{ color: 'rgba(92,124,137,0.8)' }}>
-                {settings.tagline} &nbsp;·&nbsp; <span style={{ color: 'rgba(255,255,255,0.5)' }}>GSTIN: {settings.gstin}</span>
+              <p className="text-xs text-primary-100" style={{ color: 'rgba(255,255,255,0.72)' }}>
+                {settings.tagline} &nbsp;·&nbsp; <span className="text-primary-100">GSTIN: {settings.gstin}</span>
               </p>
             </div>
           </div>
@@ -467,7 +494,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
             <div className="card-panel px-4 py-2 min-w-[220px]">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] uppercase tracking-widest text-accent font-semibold" style={{ letterSpacing: '0.12em' }}>
-                  Bill No.
+                  {t.billNumber}
                 </span>
                 <button
                   type="button"
@@ -482,41 +509,42 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                   }}
                   className="text-[10px] text-white/50 hover:text-white underline transition-colors"
                 >
-                  {isManualBillNo ? 'Reset Auto' : 'Manual'}
+                  {isManualBillNo ? t.resetAuto : t.manualBillNumber}
                 </button>
               </div>
               <input
                 type="text"
                 value={isManualBillNo ? manualBillNumber : estimatedBillNumber}
                 onChange={(e) => { setIsManualBillNo(true); setManualBillNumber(e.target.value); }}
-                className="w-full font-mono font-bold text-white text-sm text-right bg-transparent border-none outline-none"
-                style={{ color: '#5C7C89' }}
+                className="w-full border-none bg-transparent text-right font-mono text-sm font-bold text-primary-900 outline-none"
+                style={{ color: '#287056' }}
+                aria-label={t.billNumber}
               />
             </div>
 
             {/* Bill Format toggle */}
-            <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(92,124,137,0.25)' }}>
+            <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(2,51,55,0.18)' }}>
               <button
                 type="button"
                 onClick={() => setIsVillageFormat(true)}
                 className="px-3 py-2 text-xs font-semibold transition-all"
                 style={{
-                  background: isVillageFormat ? 'rgba(31,73,89,0.7)' : 'transparent',
-                  color: isVillageFormat ? '#fff' : 'rgba(255,255,255,0.4)',
+                  background: isVillageFormat ? 'rgba(2,51,55,0.7)' : 'transparent',
+                  color: isVillageFormat ? '#fff' : 'rgba(255,255,255,0.68)',
                 }}
               >
-                Village
+                {t.villageFormat}
               </button>
               <button
                 type="button"
                 onClick={() => setIsVillageFormat(false)}
                 className="px-3 py-2 text-xs font-semibold transition-all"
                 style={{
-                  background: !isVillageFormat ? 'rgba(31,73,89,0.7)' : 'transparent',
-                  color: !isVillageFormat ? '#fff' : 'rgba(255,255,255,0.4)',
+                  background: !isVillageFormat ? 'rgba(2,51,55,0.7)' : 'transparent',
+                  color: !isVillageFormat ? '#fff' : 'rgba(255,255,255,0.68)',
                 }}
               >
-                Standard
+                {t.standardFormat}
               </button>
             </div>
 
@@ -524,10 +552,10 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
             <button
               onClick={handleClearForm}
               className="btn-ghost gap-1.5 text-xs"
-              title="Clear Form (F2)"
+              title={t.clearShortcut}
             >
               <RotateCcw size={14} />
-              <span className="hidden sm:inline">Clear (F2)</span>
+              <span className="hidden sm:inline">{t.clearShortcut}</span>
             </button>
           </div>
         </div>
@@ -540,37 +568,37 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
             <AlertCircle size={15} className="flex-shrink-0" />
             <span>{errorMessage}</span>
           </div>
-          <button onClick={() => setErrorMessage('')} className="btn-ghost px-2 py-1 text-xs">Dismiss</button>
+          <button onClick={() => setErrorMessage('')} className="btn-ghost px-2 py-1 text-xs">{t.dismiss}</button>
         </div>
       )}
 
       {/* ── Customer Info ──────────────────────────────────────────── */}
       <div className="card-glass p-5">
-        <h3 className="text-xs font-semibold uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: '#5C7C89', letterSpacing: '0.12em' }}>
+        <h3 className="text-xs font-semibold uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: '#287056', letterSpacing: '0.12em' }}>
           <UserCheck size={14} />
-          {isVillageFormat ? 'Farmer / Buyer Profile' : t.customerDetails}
+          {isVillageFormat ? t.farmerBuyerProfile : t.customerDetails}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Name */}
           <div className="relative md:col-span-1">
-            <label className="label-arch">{isVillageFormat ? 'Farmer Name *' : t.customerName + ' *'}</label>
+            <label className="label-arch">{isVillageFormat ? `${t.farmerName} *` : `${t.customerName} *`}</label>
             <input
               ref={customerInputRef}
               type="text"
               value={customerName}
               onChange={(e) => { setCustomerName(e.target.value); setShowCustomerSuggestions(true); }}
               onFocus={() => setShowCustomerSuggestions(true)}
-              placeholder="e.g. K. Murugan"
+              placeholder={copy.customerNamePlaceholder}
               className="input-arch"
               autoFocus
             />
             {showCustomerSuggestions && customerSuggestions.length > 0 && (
               <div
                 className="absolute left-0 right-0 top-full mt-1 z-30 rounded-xl overflow-hidden"
-                style={{ background: 'rgba(0,10,20,0.97)', border: '1px solid rgba(92,124,137,0.3)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+                style={{ background: 'rgba(255,255,255,0.98)', border: '1px solid rgba(2,51,55,0.14)', boxShadow: '0 8px 32px rgba(2,51,55,0.12)' }}
               >
-                <div className="px-3 py-2 text-[10px] uppercase tracking-widest" style={{ color: 'rgba(92,124,137,0.7)', borderBottom: '1px solid rgba(92,124,137,0.12)' }}>
+                <div className="px-3 py-2 text-[10px] uppercase tracking-widest" style={{ color: 'rgba(2,51,55,0.7)', borderBottom: '1px solid rgba(2,51,55,0.12)' }}>
                   Returning Customers
                 </div>
                 {customerSuggestions.map((c) => (
@@ -578,13 +606,13 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                     key={c.id}
                     onClick={() => selectCustomerSuggestion(c)}
                     className="px-3 py-2.5 cursor-pointer flex justify-between items-center text-xs transition-colors hover:bg-deep-800"
-                    style={{ borderBottom: '1px solid rgba(92,124,137,0.08)' }}
+                    style={{ borderBottom: '1px solid rgba(2,51,55,0.08)' }}
                   >
                     <div>
                       <div className="font-semibold text-white/85">{c.name}</div>
-                      <div style={{ color: 'rgba(255,255,255,0.4)' }}>{c.address || c.mobile || '—'}</div>
+                      <div style={{ color: '#28564B' }}>{c.address || c.mobile || '—'}</div>
                     </div>
-                    {c.mobile && <span className="font-mono text-xs" style={{ color: '#5C7C89' }}>{c.mobile}</span>}
+                    {c.mobile && <span className="font-mono text-xs" style={{ color: '#287056' }}>{c.mobile}</span>}
                   </div>
                 ))}
               </div>
@@ -593,17 +621,17 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
 
           {/* Mobile */}
           <div>
-            <label className="label-arch">{isVillageFormat ? 'Mobile No' : t.customerMobile}</label>
-            <input type="tel" value={customerMobile} onChange={(e) => setCustomerMobile(e.target.value)} placeholder="9876543210" className="input-arch font-mono" />
+            <label className="label-arch">{isVillageFormat ? t.mobileNo : t.customerMobile}</label>
+            <input type="tel" value={customerMobile} onChange={(e) => setCustomerMobile(e.target.value)} placeholder={copy.mobilePlaceholder} className="input-arch font-mono" />
           </div>
 
           {/* Village / Address */}
           <div>
-            <label className="label-arch">{isVillageFormat ? 'Village / Town' : t.customerAddress}</label>
-            <input type="text" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="e.g. Thanipadi" className="input-arch" />
+            <label className="label-arch">{isVillageFormat ? t.villageTown : t.customerAddress}</label>
+            <input type="text" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder={copy.villagePlaceholder} className="input-arch" />
             <div className="flex flex-wrap gap-1 mt-1.5">
               {['தானிப்பாடி', 'சாத்தனூர்', 'செங்கம்', 'மேல்செங்கம்'].map((v) => (
-                <button key={v} type="button" onClick={() => setCustomerAddress(v)} className="text-[10px] px-2 py-0.5 rounded-md transition-colors" style={{ background: 'rgba(31,73,89,0.3)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(92,124,137,0.2)' }}>
+                <button key={v} type="button" onClick={() => setCustomerAddress(v)} className="text-[10px] px-2 py-0.5 rounded-md transition-colors" style={{ background: '#EAF8E7', color: '#28564B', border: '1px solid rgba(2,51,55,0.2)' }}>
                   {v}
                 </button>
               ))}
@@ -612,33 +640,33 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
 
           {/* Crop / GSTIN */}
           <div>
-            <label className="label-arch">{isVillageFormat ? 'Crop Type' : t.gstin}</label>
+            <label className="label-arch">{isVillageFormat ? t.cropType : t.gstin}</label>
             {isVillageFormat ? (
               <div>
-                <input type="text" value={cropType} onChange={(e) => setCropType(e.target.value)} placeholder="e.g. நெல் / நிலக்கடலை" className="input-arch" />
+                <input type="text" value={cropType} onChange={(e) => setCropType(e.target.value)} placeholder={copy.cropPlaceholder} className="input-arch" />
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {['🌾 நெல்', '🥜 நிலக்கடலை', '🎋 கரும்பு', '🍌 வாழை'].map((c) => (
-                    <button key={c} type="button" onClick={() => setCropType(c)} className="text-[10px] px-2 py-0.5 rounded-md transition-colors" style={{ background: 'rgba(31,73,89,0.3)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(92,124,137,0.2)' }}>
+                    <button key={c} type="button" onClick={() => setCropType(c)} className="text-[10px] px-2 py-0.5 rounded-md transition-colors" style={{ background: '#EAF8E7', color: '#28564B', border: '1px solid rgba(2,51,55,0.2)' }}>
                       {c}
                     </button>
                   ))}
                 </div>
               </div>
             ) : (
-              <input type="text" value={customerGstin} onChange={(e) => setCustomerGstin(e.target.value.toUpperCase())} placeholder="33XXXXX..." className="input-arch font-mono" />
+              <input type="text" value={customerGstin} onChange={(e) => setCustomerGstin(e.target.value.toUpperCase())} placeholder={copy.gstinPlaceholder} className="input-arch font-mono" />
             )}
           </div>
         </div>
 
         {isVillageFormat && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4" style={{ borderTop: '1px solid rgba(92,124,137,0.12)' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4" style={{ borderTop: '1px solid rgba(2,51,55,0.12)' }}>
             <div>
-              <label className="label-arch">Land Area / Acres</label>
-              <input type="text" value={landArea} onChange={(e) => setLandArea(e.target.value)} placeholder="e.g. 2.5 Acres" className="input-arch" />
+              <label className="label-arch">{t.landAreaInput}</label>
+              <input type="text" value={landArea} onChange={(e) => setLandArea(e.target.value)} placeholder={copy.landAreaPlaceholder} className="input-arch" />
             </div>
             <div>
-              <label className="label-arch">GSTIN (Optional)</label>
-              <input type="text" value={customerGstin} onChange={(e) => setCustomerGstin(e.target.value.toUpperCase())} placeholder="Optional GSTIN or Farmer ID" className="input-arch font-mono" />
+              <label className="label-arch">{t.gstinOptional}</label>
+              <input type="text" value={customerGstin} onChange={(e) => setCustomerGstin(e.target.value.toUpperCase())} placeholder={copy.farmerIdPlaceholder} className="input-arch font-mono" />
             </div>
           </div>
         )}
@@ -647,10 +675,10 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
       {/* ── Product Category Quick-Select Cards ──────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { title: 'Seeds & Paddy', sub: 'Native Seeds', icon: '🌱', color: 'rgba(34,197,94,0.15)', border: 'rgba(34,197,94,0.25)' },
-          { title: 'Fertilizers', sub: 'Organic & Chemical', icon: '🌾', color: 'rgba(234,179,8,0.1)', border: 'rgba(234,179,8,0.2)' },
-          { title: 'Pesticides', sub: 'Crop Protection', icon: '🚜', color: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.2)' },
-          { title: 'Tools & Equipment', sub: 'Agriculture Tools', icon: '🛠️', color: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.2)' },
+          { title: t.categorySeedsPaddy, sub: t.nativeSeeds, icon: '🌱', color: '#EAF8E7', border: 'rgba(77,166,116,0.30)' },
+          { title: t.catFertilizers, sub: t.organicChemical, icon: '🌾', color: '#F3FAF0', border: 'rgba(193,230,186,0.40)' },
+          { title: t.catPesticides, sub: t.cropProtection, icon: '🚜', color: '#EAF8E7', border: 'rgba(112,185,135,0.32)' },
+          { title: t.toolsEquipment, sub: t.agricultureTools, icon: '🛠️', color: '#F3FAF0', border: 'rgba(77,166,116,0.28)' },
         ].map((card, i) => (
           <button
             key={i}
@@ -659,8 +687,8 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
             style={{ background: card.color, border: `1px solid ${card.border}` }}
           >
             <span className="text-2xl block mb-1">{card.icon}</span>
-            <div className="text-xs font-semibold text-white/85">{card.title}</div>
-            <div className="text-[11px]" style={{ color: 'rgba(255,255,255,0.45)' }}>{card.sub}</div>
+            <div className="text-xs font-semibold text-primary-900">{card.title}</div>
+            <div className="text-[11px]" style={{ color: '#28564B' }}>{card.sub}</div>
           </button>
         ))}
       </div>
@@ -669,12 +697,12 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
       <div className="card-glass overflow-hidden">
         <div
           className="flex items-center justify-between px-5 py-3.5"
-          style={{ borderBottom: '1px solid rgba(92,124,137,0.15)' }}
+          style={{ borderBottom: '1px solid rgba(2,51,55,0.15)' }}
         >
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-white">Billing Items</span>
+            <span className="text-sm font-semibold text-primary-900">{t.billingItems}</span>
             {items.length > 0 && <span className="badge-arch">{items.length}</span>}
-            <span className="text-xs" style={{ color: 'rgba(92,124,137,0.6)' }}>· Fixed Price Locked</span>
+            <span className="text-xs text-text-tertiary">{t.fixedPriceLocked}</span>
           </div>
           <button
             id="add-product-btn"
@@ -689,14 +717,14 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
           <table className="table-arch">
             <thead>
               <tr>
-                <th className="text-center w-10">S.No</th>
-                <th>Product</th>
+                <th className="text-center w-10">#</th>
+                <th>{t.productName}</th>
                 <th className="text-center w-20">{t.unit}</th>
-                <th className="text-right w-28">Rate</th>
+                <th className="text-right w-28">{t.rate}</th>
                 <th className="text-center w-36">{t.qty}</th>
                 <th className="text-center w-20">GST %</th>
-                <th className="text-right w-32">{t.amount} (₹)</th>
-                <th className="text-center w-12">Del</th>
+                <th className="text-right w-32">{t.amount}</th>
+                <th className="text-center w-12">{t.deleteColumn}</th>
               </tr>
             </thead>
             <tbody>
@@ -706,17 +734,17 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                     <div className="flex flex-col items-center gap-3">
                       <div
                         className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                        style={{ background: 'rgba(92,124,137,0.08)', border: '1px solid rgba(92,124,137,0.15)' }}
+                        style={{ background: '#F3FAF0', border: '1px solid rgba(2,51,55,0.15)' }}
                       >
                         🌾
                       </div>
-                      <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>No products added yet</p>
+                      <p className="text-sm text-text-secondary">{t.noProductsAdded}</p>
                       <button
                         type="button"
                         onClick={() => setIsProductModalOpen(true)}
                         className="btn-primary py-2 px-5 text-xs"
                       >
-                        <Plus size={13} /> Add Product (F4)
+                        <Plus size={13} /> {t.addProduct} (F4)
                       </button>
                     </div>
                   </td>
@@ -734,31 +762,36 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                         </div>
                       </td>
                       <td className="text-center">
-                        <span className="badge-arch">{item.unit}</span>
+                        <span className="badge-arch">{formatUnit(item.unit, language)}</span>
                       </td>
                       <td className="text-right">
-                        <span className="font-mono font-semibold text-white/80">₹{item.rate.toFixed(2)}</span>
+                        <span className="font-mono font-semibold text-white/80">{formatMoney(item.rate)}</span>
                       </td>
                       <td className="text-center">
                         <div className="inline-flex items-center gap-1">
                           <button
+                            type="button"
+                            aria-label={t.decreaseQuantity}
                             onClick={() => handleQuantityChange(index, Math.max(1, item.quantity - 1))}
                             className="w-7 h-7 rounded-lg text-white font-bold text-base flex items-center justify-center transition-colors"
-                            style={{ background: 'rgba(31,73,89,0.5)', border: '1px solid rgba(92,124,137,0.3)' }}
+                            style={{ background: 'rgba(2,51,55,0.5)', border: '1px solid rgba(2,51,55,0.14)' }}
                           >−</button>
                           <input
                             type="number"
+                            aria-label={t.qty}
                             step="any"
                             min="0.01"
                             value={item.quantity}
                             onChange={(e) => handleQuantityChange(index, parseFloat(e.target.value) || 0)}
                             className="w-14 text-center font-bold text-sm rounded-lg py-1 bg-transparent text-white outline-none"
-                            style={{ border: '1px solid rgba(92,124,137,0.3)' }}
+                            style={{ border: '1px solid rgba(2,51,55,0.14)' }}
                           />
                           <button
+                            type="button"
+                            aria-label={t.increaseQuantity}
                             onClick={() => handleQuantityChange(index, item.quantity + 1)}
                             className="w-7 h-7 rounded-lg text-white font-bold text-base flex items-center justify-center transition-colors"
-                            style={{ background: 'rgba(31,73,89,0.5)', border: '1px solid rgba(92,124,137,0.3)' }}
+                            style={{ background: 'rgba(2,51,55,0.5)', border: '1px solid rgba(2,51,55,0.14)' }}
                           >+</button>
                         </div>
                       </td>
@@ -766,16 +799,18 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                         <span className="badge-info">{item.gstRate}%</span>
                       </td>
                       <td className="text-right">
-                        <span className="font-mono font-semibold text-white">₹{item.totalAmount.toFixed(2)}</span>
+                        <span className="font-mono font-semibold text-white">{formatMoney(item.totalAmount)}</span>
                       </td>
                       <td className="text-center">
                         <button
+                          type="button"
+                          aria-label={t.removeItem}
                           onClick={() => handleRemoveItem(index)}
                           className="p-1.5 rounded-lg transition-colors"
-                          style={{ color: 'rgba(239,68,68,0.6)' }}
-                          title="Remove"
+                          style={{ color: 'rgba(180,35,24,0.75)' }}
+                          title={t.removeItem}
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={14} aria-hidden="true" />
                         </button>
                       </td>
                     </tr>
@@ -793,18 +828,18 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
         {/* Left: GST Mode + Payment + Amount in Words */}
         <div className="lg:col-span-7 space-y-4">
           <div className="card-glass p-5 space-y-5">
-            <h4 className="text-xs uppercase tracking-widest font-semibold" style={{ color: '#5C7C89', letterSpacing: '0.12em' }}>
-              Payment & Tax Configuration
+            <h4 className="text-xs uppercase tracking-widest font-semibold" style={{ color: '#287056', letterSpacing: '0.12em' }}>
+              {t.paymentTaxConfiguration}
             </h4>
 
             {/* GST Mode */}
             <div>
-              <label className="label-arch">GST Calculation Mode</label>
+              <label className="label-arch">{t.gstMode}</label>
               <div className="flex flex-wrap gap-2 mt-1">
                 {[
-                  { id: 'CGST_SGST' as const, label: 'Intra-state (CGST + SGST)' },
-                  { id: 'IGST' as const, label: 'Inter-state (IGST)' },
-                  { id: 'EXEMPT' as const, label: 'GST Exempt' },
+                  { id: 'CGST_SGST' as const, label: t.gstModeCgstSgst },
+                  { id: 'IGST' as const, label: t.gstModeIgst },
+                  { id: 'EXEMPT' as const, label: t.gstModeExempted },
                 ].map((m) => (
                   <button
                     key={m.id}
@@ -812,9 +847,9 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                     onClick={() => setGstMode(m.id)}
                     className="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all"
                     style={{
-                      background: gstMode === m.id ? 'rgba(31,73,89,0.7)' : 'rgba(92,124,137,0.08)',
-                      border: `1px solid ${gstMode === m.id ? 'rgba(92,124,137,0.6)' : 'rgba(92,124,137,0.2)'}`,
-                      color: gstMode === m.id ? '#fff' : 'rgba(255,255,255,0.55)',
+                      background: gstMode === m.id ? '#023337' : '#F3FAF0',
+                      border: `1px solid ${gstMode === m.id ? '#4DA674' : '#C1E6BA'}`,
+                      color: gstMode === m.id ? '#fff' : '#28564B',
                     }}
                   >
                     {m.label}
@@ -828,12 +863,12 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
               <label className="label-arch">{t.paymentMethod}</label>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-1">
                 {[
-                  { id: 'Cash', label: 'Cash', icon: '💵' },
-                  { id: 'UPI', label: 'UPI', icon: '📲' },
-                  { id: 'Card', label: 'Card', icon: '💳' },
-                  { id: 'Bank Transfer', label: 'Bank', icon: '🏛️' },
-                  { id: 'Credit', label: 'Khata', icon: '📝' },
-                  { id: 'Other', label: 'Other', icon: '🏷️' },
+                  { id: 'Cash', label: t.cash, icon: '💵' },
+                  { id: 'UPI', label: t.upi, icon: '📲' },
+                  { id: 'Card', label: t.card, icon: '💳' },
+                  { id: 'Bank Transfer', label: t.bank, icon: '🏛️' },
+                  { id: 'Credit', label: t.khata, icon: '📝' },
+                  { id: 'Other', label: t.other, icon: '🏷️' },
                 ].map((pm) => (
                   <button
                     key={pm.id}
@@ -841,9 +876,9 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                     onClick={() => setPaymentMethod(pm.id as PaymentMethod)}
                     className="py-2.5 px-2 rounded-xl text-xs font-semibold text-center transition-all"
                     style={{
-                      background: paymentMethod === pm.id ? 'rgba(31,73,89,0.8)' : 'rgba(92,124,137,0.08)',
-                      border: `1px solid ${paymentMethod === pm.id ? 'rgba(92,124,137,0.7)' : 'rgba(92,124,137,0.2)'}`,
-                      color: paymentMethod === pm.id ? '#fff' : 'rgba(255,255,255,0.5)',
+                      background: paymentMethod === pm.id ? '#023337' : '#F3FAF0',
+                      border: `1px solid ${paymentMethod === pm.id ? '#4DA674' : '#C1E6BA'}`,
+                      color: paymentMethod === pm.id ? '#fff' : '#28564B',
                     }}
                   >
                     {pm.icon} {pm.label}
@@ -856,27 +891,27 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
             {paymentMethod === 'Cash' && (
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="label-arch">{t.amountReceived} (₹)</label>
+                  <label className="label-arch">{t.amountReceived}</label>
                   <input
                     type="number"
                     value={amountReceived}
                     onChange={(e) => setAmountReceived(e.target.value)}
-                    placeholder="Cash tendered"
+                    placeholder={copy.cashTenderedPlaceholder}
                     className="input-arch font-mono"
                   />
                 </div>
                 <div>
-                  <label className="label-arch">{t.balance} (₹)</label>
+                  <label className="label-arch">{t.balance}</label>
                   <div
                     className="rounded-xl px-4 py-3 font-mono font-bold text-sm flex items-center justify-between"
                     style={{
-                      background: balance >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
-                      border: `1px solid ${balance >= 0 ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-                      color: balance >= 0 ? '#4ade80' : '#f87171',
+                      background: balance >= 0 ? '#EAF8E7' : '#FDECEC',
+                      border: `1px solid ${balance >= 0 ? 'rgba(77,166,116,0.30)' : 'rgba(180,35,24,0.30)'}`,
+                      color: balance >= 0 ? '#287056' : '#B42318',
                     }}
                   >
-                    <span>Change:</span>
-                    <span>{formatCurrency(balance)}</span>
+                    <span>{t.change}:</span>
+                    <span>{formatMoney(balance)}</span>
                   </div>
                 </div>
               </div>
@@ -886,7 +921,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
           {/* Amount in words */}
           <div className="card-panel px-5 py-4">
             <span className="label-arch block mb-1">{t.amountInWords}</span>
-            <p className="text-sm font-medium italic text-white/75 leading-relaxed">{numberToWords(roundedGrandTotal)}</p>
+            <p className="text-sm font-medium italic text-white/75 leading-relaxed">{numberToWords(roundedGrandTotal, language)}</p>
           </div>
         </div>
 
@@ -894,42 +929,42 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
         <div className="lg:col-span-5 card-glass overflow-hidden">
           <div
             className="px-5 py-3.5 flex items-center justify-between"
-            style={{ borderBottom: '1px solid rgba(92,124,137,0.15)' }}
+            style={{ borderBottom: '1px solid rgba(2,51,55,0.15)' }}
           >
-            <span className="text-sm font-semibold text-white">Bill Summary</span>
-            <span className="badge-arch text-[10px]">Live Total</span>
+            <span className="text-sm font-semibold text-primary-900">{t.billSummary}</span>
+            <span className="badge-arch text-[10px]">{t.liveTotal}</span>
           </div>
 
           <div className="p-5 space-y-3 text-sm">
-            <div className="flex justify-between" style={{ color: 'rgba(255,255,255,0.65)' }}>
-              <span>{t.subtotal} (Taxable)</span>
-              <span className="font-mono font-semibold text-white">{formatCurrency(subtotal)}</span>
+            <div className="flex justify-between" style={{ color: '#28564B' }}>
+              <span>{t.subtotal} ({t.taxableLabel})</span>
+              <span className="font-mono font-semibold text-white">{formatMoney(subtotal)}</span>
             </div>
 
             {gstMode === 'CGST_SGST' && (
               <>
-                <div className="flex justify-between text-xs" style={{ color: 'rgba(92,124,137,0.8)', background: 'rgba(31,73,89,0.15)', borderRadius: '8px', padding: '8px 12px' }}>
-                  <span>{t.cgst} (Central GST)</span>
-                  <span className="font-mono">{formatCurrency(cgst)}</span>
+                <div className="flex justify-between text-xs" style={{ color: 'rgba(2,51,55,0.8)', background: 'rgba(2,51,55,0.15)', borderRadius: '8px', padding: '8px 12px' }}>
+                  <span>{t.centralGst}</span>
+                  <span className="font-mono">{formatMoney(cgst)}</span>
                 </div>
-                <div className="flex justify-between text-xs" style={{ color: 'rgba(92,124,137,0.8)', background: 'rgba(31,73,89,0.15)', borderRadius: '8px', padding: '8px 12px' }}>
-                  <span>{t.sgst} (State GST)</span>
-                  <span className="font-mono">{formatCurrency(sgst)}</span>
+                <div className="flex justify-between text-xs" style={{ color: 'rgba(2,51,55,0.8)', background: 'rgba(2,51,55,0.15)', borderRadius: '8px', padding: '8px 12px' }}>
+                  <span>{t.stateGst}</span>
+                  <span className="font-mono">{formatMoney(sgst)}</span>
                 </div>
               </>
             )}
 
             {gstMode === 'IGST' && (
-              <div className="flex justify-between text-xs" style={{ color: 'rgba(92,124,137,0.8)', background: 'rgba(31,73,89,0.15)', borderRadius: '8px', padding: '8px 12px' }}>
-                <span>{t.igst} (Integrated GST)</span>
-                <span className="font-mono">{formatCurrency(igst)}</span>
+              <div className="flex justify-between text-xs" style={{ color: 'rgba(2,51,55,0.8)', background: 'rgba(2,51,55,0.15)', borderRadius: '8px', padding: '8px 12px' }}>
+                <span>{t.integratedGst}</span>
+                <span className="font-mono">{formatMoney(igst)}</span>
               </div>
             )}
 
             {roundOff !== 0 && (
-              <div className="flex justify-between text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <div className="flex justify-between text-xs" style={{ color: '#28564B' }}>
                 <span>{t.roundOff}</span>
-                <span className="font-mono">{formatCurrency(roundOff)}</span>
+                <span className="font-mono">{formatMoney(roundOff)}</span>
               </div>
             )}
 
@@ -937,19 +972,19 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
             <div
               className="rounded-xl p-4 flex items-center justify-between mt-2"
               style={{
-                background: 'linear-gradient(135deg, rgba(31,73,89,0.7) 0%, rgba(1,20,37,0.8) 100%)',
-                border: '1px solid rgba(92,124,137,0.35)',
+                background: 'linear-gradient(135deg, var(--color-primary-800) 0%, var(--color-primary-900) 100%)',
+                border: '1px solid rgba(193,230,186,0.3)',
               }}
             >
-              <span className="text-xs uppercase tracking-widest font-semibold" style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.1em' }}>
+              <span className="text-xs uppercase tracking-widest font-semibold text-primary-100" style={{ letterSpacing: '0.1em' }}>
                 {t.grandTotal}
               </span>
-              <span className="text-2xl font-bold font-mono text-white">{formatCurrency(roundedGrandTotal)}</span>
+              <span className="text-2xl font-bold font-mono text-white">{formatMoney(roundedGrandTotal)}</span>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="px-5 pb-5 space-y-2.5" style={{ borderTop: '1px solid rgba(92,124,137,0.12)', paddingTop: '16px' }}>
+          <div className="px-5 pb-5 space-y-2.5" style={{ borderTop: '1px solid rgba(2,51,55,0.12)', paddingTop: '16px' }}>
             <button
               id="save-print-btn"
               onClick={() => handleSaveBill(true)}
@@ -958,7 +993,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
               style={{ letterSpacing: '0.08em' }}
             >
               <Printer size={17} />
-              {isSaving ? 'Saving…' : `${t.saveAndPrint} (F8)`}
+              {isSaving ? t.saving : `${t.saveAndPrint} (F8)`}
             </button>
 
             <div className="grid grid-cols-2 gap-2.5">
@@ -978,7 +1013,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                       id: 'preview',
                       billNumber: isManualBillNo && manualBillNumber.trim() ? manualBillNumber.trim() : estimatedBillNumber,
                       date: getTodayDateString(),
-                      time: formatTime(new Date()),
+                      time: formatTime(new Date(), language),
                       customer: {
                         name: customerName.trim(),
                         mobile: customerMobile.trim() || undefined,
@@ -1010,7 +1045,7 @@ export const BillingCounter: React.FC<BillingCounterProps> = ({ onBillCreated })
                 }}
                 disabled={items.length === 0}
                 className="btn-ghost border py-2.5 text-xs gap-1.5"
-                style={{ borderColor: 'rgba(92,124,137,0.3)' }}
+                style={{ borderColor: 'rgba(2,51,55,0.14)' }}
               >
                 <Eye size={14} /> {t.printPreview}
               </button>

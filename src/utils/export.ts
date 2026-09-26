@@ -1,10 +1,15 @@
 import type { Bill } from '../types';
 import { formatDate, formatTime } from './date';
+import type { LanguageCode } from './i18n';
 
 /**
  * Exports detailed sales line items to standard CSV format
  */
-export function exportBillsToCSV(bills: Bill[], filename = 'praveen-traders-sales.csv') {
+export function exportBillsToCSV(
+  bills: Bill[],
+  filename = 'praveen-traders-sales.csv',
+  language: LanguageCode = 'en',
+) {
   const headers = [
     'Bill Number',
     'Date',
@@ -33,8 +38,8 @@ export function exportBillsToCSV(bills: Bill[], filename = 'praveen-traders-sale
     bill.items.forEach((item) => {
       rows.push([
         `"${bill.billNumber}"`,
-        `"${formatDate(bill.date)}"`,
-        `"${formatTime(bill.time)}"`,
+        `"${formatDate(bill.date, language)}"`,
+        `"${formatTime(bill.time, language)}"`,
         `"${(bill.customer.name || '').replace(/"/g, '""')}"`,
         `"${bill.customer.mobile || ''}"`,
         `"${(bill.customer.address || '').replace(/"/g, '""')}"`,

@@ -1,184 +1,28 @@
 import React from 'react';
 import type { Bill, BusinessSettings } from '../../types';
+import { useSettings } from '../../context/SettingsContext';
 import { formatCurrency, numberToWords } from '../../utils/currency';
 import { formatDate, formatTime } from '../../utils/date';
+import { formatPaymentMethod, formatUnit } from '../../utils/i18n';
 
-interface ThermalBillProps {
-  bill: Bill;
-  settings: BusinessSettings;
-  billNumber?: string;
-}
+interface ThermalBillProps { bill: Bill; settings: BusinessSettings; }
 
-export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings, billNumber }) => {
-  const displayBillNumber = billNumber || bill.billNumber;
-
-  const isCredit = bill.paymentMethod === 'Credit';
-  const paymentStatus = isCredit
-    ? 'PENDING'
-    : bill.amountReceived && bill.amountReceived < bill.grandTotal
-    ? 'PARTIAL'
-    : 'PAID';
-
+export const ThermalBill: React.FC<ThermalBillProps> = ({ bill, settings }) => {
+  const { t, language } = useSettings();
+  const money = (value: number | null | undefined) => formatCurrency(value, language);
+  const address = settings.completeAddress || [settings.addressLine1, settings.street, settings.city, settings.district, settings.state, settings.pincode].filter(Boolean).join(', ');
   return (
-    <div
-      className="thermal-bill font-mono text-[12px] leading-tight text-black bg-white p-3 mx-auto w-[80mm] max-w-[80mm] border border-dashed border-gray-300 shadow-sm print:border-none print:p-0 print:shadow-none print:w-[80mm] select-text"
-      style={{ fontFamily: "'Courier New', Courier, monospace" }}
-    >
-      {/* Auspicious Village Agriculture Invocation */}
-      <div className="text-center font-bold text-[10px] pb-1 text-black">
-        🌾 || Sri Chennammal Thunai || 🌾
-      </div>
-
-      {/* Header */}
-      <div className="text-center pb-2">
-        <div className="text-base">🌱 🌾 🌱</div>
-        <h1 className="text-[16px] font-black tracking-tight uppercase">
-          {settings.businessName || 'A.S. PRAVEEN TRADERS'}
-        </h1>
-        <p className="text-[11px] font-bold uppercase">{settings.tagline || 'Agricultural Products & Farm Inputs'} • உழவர் மையம்</p>
-        <p className="text-[10px] mt-0.5">NO : 2428, SATHYA NAGAR MAIN ST, THANIPADI, TIRUVANNAMALAI - 606708</p>
-        <p className="text-[11px] font-bold mt-1">GSTIN: {settings.gstin || '33HQYPP5735G1Z3'}</p>
-        <p className="text-[10px] font-bold">
-          Mob: {settings.mobile1 || '8825633575'} / {settings.mobile2 || '9443990403'}
-        </p>
-      </div>
-
-      <div className="border-t border-dashed border-black my-1.5" />
-
-      {/* Bill Metadata */}
-      <div className="text-[11px] space-y-0.5">
-        <div className="flex justify-between font-bold">
-          <span>Bill No: {displayBillNumber}</span>
-          <span>{formatDate(bill.date)}</span>
-        </div>
-        <div className="flex justify-between text-[10px]">
-          <span>Time: {formatTime(bill.time)}</span>
-          <span className="font-bold">Status: {paymentStatus}</span>
-        </div>
-        <div className="flex justify-between text-[10px]">
-          <span>Payment: {bill.paymentMethod}</span>
-          <span>GST: {bill.gstMode}</span>
-        </div>
-      </div>
-
-      <div className="border-t border-dashed border-black my-1.5" />
-
-      {/* Customer / Farmer Info */}
-      <div className="text-[11px] space-y-0.5">
-        <div className="font-bold">
-          விவசாயி / Cust: <span className="uppercase">{bill.customer.name}</span>
-        </div>
-        {bill.customer.mobile && <div>அலைபேசி / Mob: {bill.customer.mobile}</div>}
-        {bill.customer.address && <div>கிராமம் / Village: {bill.customer.address}</div>}
-        {bill.customer.crop && <div>பயிர் / Crop: {bill.customer.crop}</div>}
-        {bill.customer.landArea && <div>நிலப் பரப்பு: {bill.customer.landArea}</div>}
-        {bill.customer.gstin && <div>GSTIN: {bill.customer.gstin}</div>}
-      </div>
-
-      <div className="border-t border-dashed border-black my-1.5" />
-
-      {/* Items Table */}
-      <table className="w-full text-left text-[11px]">
-        <thead>
-          <tr className="border-b border-dashed border-black font-bold">
-            <th className="py-1">Item</th>
-            <th className="text-center py-1">Qty</th>
-            <th className="text-right py-1">Rate</th>
-            <th className="text-right py-1">Amount</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-dotted divide-gray-300">
-          {bill.items.map((item, idx) => (
-            <tr key={idx} className="align-top">
-              <td className="py-1 pr-1">
-                <div className="font-bold">{item.productName}</div>
-                <div className="text-[9px] text-gray-700">
-                  GST {item.gstRate}% {item.unit && `(${item.unit})`}
-                </div>
-              </td>
-              <td className="text-center py-1 px-1 whitespace-nowrap font-bold">{item.quantity}</td>
-              <td className="text-right py-1 px-1 whitespace-nowrap">{item.rate.toFixed(2)}</td>
-              <td className="text-right py-1 pl-1 font-black whitespace-nowrap">{item.totalAmount.toFixed(2)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="border-t border-dashed border-black my-1.5" />
-
-      {/* Totals */}
-      <div className="space-y-0.5 text-[11px]">
-        <div className="flex justify-between">
-          <span>Subtotal:</span>
-          <span>{formatCurrency(bill.subtotal)}</span>
-        </div>
-        {bill.gstMode === 'CGST_SGST' && (
-          <>
-            <div className="flex justify-between text-[10px]">
-              <span>CGST:</span>
-              <span>{formatCurrency(bill.cgst)}</span>
-            </div>
-            <div className="flex justify-between text-[10px]">
-              <span>SGST:</span>
-              <span>{formatCurrency(bill.sgst)}</span>
-            </div>
-          </>
-        )}
-        {bill.gstMode === 'IGST' && (
-          <div className="flex justify-between text-[10px]">
-            <span>IGST:</span>
-            <span>{formatCurrency(bill.igst)}</span>
-          </div>
-        )}
-        {bill.roundOff !== 0 && (
-          <div className="flex justify-between text-[10px]">
-            <span>Round Off:</span>
-            <span>{formatCurrency(bill.roundOff)}</span>
-          </div>
-        )}
-        
-        <div className="border-t border-dashed border-black my-1" />
-
-        <div className="flex justify-between text-[14px] font-black">
-          <span>TOTAL AMOUNT:</span>
-          <span>{formatCurrency(bill.grandTotal)}</span>
-        </div>
-
-        {bill.amountReceived !== undefined && bill.amountReceived > 0 && (
-          <div className="pt-1 text-[10px] space-y-0.5">
-            <div className="flex justify-between">
-              <span>Amount Received:</span>
-              <span>{formatCurrency(bill.amountReceived)}</span>
-            </div>
-            <div className="flex justify-between font-bold">
-              <span>Change / Balance:</span>
-              <span>{formatCurrency(bill.balance || 0)}</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-dashed border-black my-1.5" />
-
-      {/* Words */}
-      <div className="text-[10px] italic leading-tight">
-        Rupees {numberToWords(bill.grandTotal)}
-      </div>
-
-      <div className="border-t border-dashed border-black my-2" />
-
-      {/* Traditional Village Footer message */}
-      <div className="text-center text-[10px] space-y-1">
-        <p className="font-bold">🌾 உழவர் செழிக்க நாடு செழிக்கும்! 🌾</p>
-        <p className="text-[9px] uppercase font-bold">A.S. Praveen Traders • உழவர் மையம்</p>
-        <p className="text-[9px] italic">விவசாயம் காப்போம்! நன்றி, மீண்டும் வருக!</p>
-        <div className="pt-2 flex justify-between text-[8px] border-t border-dotted border-gray-400 mt-2">
-          <span>விவசாயி கையொப்பம்</span>
-          <span>உரிமையாளர் கையொப்பம்</span>
-        </div>
-        <p className="text-[8px] text-gray-500 pt-1">Operator: {bill.createdBy}</p>
-      </div>
-    </div>
+    <article className="thermal-bill mx-auto w-[80mm] max-w-[80mm] select-text border border-dashed border-gray-300 bg-white p-3 font-mono text-[11px] leading-tight text-black shadow-sm print:w-[80mm] print:border-0 print:p-0 print:shadow-none" aria-label={`${t.thermalInvoice} ${bill.billNumber}`}>
+      <header className="text-center"><div className="flex items-center justify-center gap-1 text-base font-black uppercase tracking-tight"><span className="text-xl">✦</span>{settings.businessName || t.brandName}</div><p className="mt-0.5 text-[9px] uppercase">{settings.tagline || t.invoiceSubtitle}</p><p className="mt-1 text-[9px]">{address}</p><p className="mt-1 text-[10px] font-bold">GSTIN: {settings.gstin || '—'}</p></header>
+      <div className="my-1.5 border-t border-dashed border-black" />
+      <div className="flex justify-between text-[10px] font-bold"><span>{t.invoiceNo}: {bill.billNumber}</span><span>{formatDate(bill.date, language)}</span></div><div className="flex justify-between text-[9px]"><span>{t.invoiceTime}: {formatTime(bill.time, language)}</span><span>{formatPaymentMethod(bill.paymentMethod, language)}</span></div>
+      <div className="my-1.5 border-t border-dashed border-black" />
+      <div className="text-[10px]"><p className="font-bold uppercase">{t.billedTo}</p><p className="font-bold">{bill.customer.name}</p>{bill.customer.mobile && <p>{t.customerMobile}: {bill.customer.mobile}</p>}{bill.customer.address && <p>{t.village}: {bill.customer.address}</p>}{bill.customer.crop && <p>{t.crop}: {bill.customer.crop}</p>}{bill.customer.landArea && <p>{t.landArea}: {bill.customer.landArea}</p>}{bill.customer.gstin && <p>GSTIN: {bill.customer.gstin}</p>}</div>
+      <div className="my-1.5 border-t border-dashed border-black" />
+      <table className="w-full border-collapse text-[10px]"><thead><tr className="border-b border-dashed border-black font-bold"><th className="py-1 text-left">{t.itemNo}</th><th className="py-1 text-left">{t.itemName || t.productName}</th><th className="py-1 text-right">{t.qty}</th><th className="py-1 text-right">{t.rate}</th><th className="py-1 text-right">{t.amount}</th></tr></thead><tbody>{bill.items.map((item, index) => <tr key={item.id || index} className="align-top"><td className="py-1 pr-1">{index + 1}</td><td className="py-1 pr-1 font-bold">{item.productName}<br /><span className="font-normal">{formatUnit(item.unit, language)} · GST {item.gstRate}%</span></td><td className="py-1 pr-1 text-right">{item.quantity}</td><td className="py-1 pr-1 text-right">{money(item.rate)}</td><td className="py-1 text-right font-bold">{money(item.totalAmount)}</td></tr>)}</tbody></table>
+      <div className="my-1.5 border-t border-dashed border-black" />
+      <div className="space-y-0.5 text-[10px]"><div className="flex justify-between"><span>{t.subtotal}</span><span>{money(bill.subtotal)}</span></div>{bill.gstMode !== 'EXEMPT' && <>{bill.cgst > 0 && <div className="flex justify-between"><span>{t.cgst}</span><span>{money(bill.cgst)}</span></div>}{bill.sgst > 0 && <div className="flex justify-between"><span>{t.sgst}</span><span>{money(bill.sgst)}</span></div>}{bill.igst > 0 && <div className="flex justify-between"><span>{t.igst}</span><span>{money(bill.igst)}</span></div>}</>}{bill.roundOff !== 0 && <div className="flex justify-between"><span>{t.roundOff}</span><span>{money(bill.roundOff)}</span></div>}<div className="my-1 flex justify-between border-y border-dashed border-black py-1 text-[13px] font-black"><span>{t.totalAmount}</span><span>{money(bill.grandTotal)}</span></div><div className="flex justify-between"><span>{t.received}</span><span>{money(bill.amountReceived)}</span></div><div className="flex justify-between"><span>{t.balanceDue}</span><span>{money(bill.balance || 0)}</span></div></div>
+      <div className="my-1.5 border-t border-dashed border-black" /><p className="text-[9px]"><strong>{t.amountInWordsLabel}:</strong> {numberToWords(bill.grandTotal, language)}</p><p className="mt-1 text-center text-[9px] font-bold uppercase">{settings.invoiceFooterMessage || t.invoiceFooter}</p><div className="mt-2 flex justify-between text-[8px] text-gray-600"><span>{settings.mobile1}</span><span>{t.user}: {bill.createdBy}</span></div>
+    </article>
   );
 };
-

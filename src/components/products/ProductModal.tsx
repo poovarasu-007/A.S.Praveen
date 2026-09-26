@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { Product, ProductCategory, UnitType } from '../../types';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
+import { formatNumber } from '../../utils/i18n';
+import { Package, X, Save, AlertCircle } from 'lucide-react';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -20,7 +22,7 @@ const CATEGORIES: ProductCategory[] = [
   'Crop Protection',
   'Bio-Fertilizers',
   'Farming Accessories',
-  'Other'
+  'Other',
 ];
 
 const UNITS: UnitType[] = [
@@ -35,10 +37,78 @@ const UNITS: UnitType[] = [
   'box',
   'packet',
   'bundle',
-  'set'
+  'set',
 ];
 
 const GST_RATES = [0, 5, 12, 18, 28];
+
+const CATEGORY_LABEL_KEYS: Record<ProductCategory, string> = {
+  Seeds: 'catSeeds',
+  Fertilizers: 'catFertilizers',
+  Pesticides: 'catPesticides',
+  'Organic Manure': 'catOrganicManure',
+  'Agricultural Tools': 'catAgriTools',
+  'Irrigation Equipment': 'catIrrigation',
+  'Plant Growth Products': 'catPlantGrowth',
+  'Crop Protection': 'catCropProtection',
+  'Bio-Fertilizers': 'catBioFertilizers',
+  'Farming Accessories': 'catFarmingAccessories',
+  Other: 'catOther',
+};
+
+const UNIT_LABELS = {
+  en: {
+    kg: 'kg',
+    gram: 'gram',
+    quintal: 'quintal',
+    ton: 'ton',
+    bag: 'bag',
+    litre: 'litre',
+    ml: 'ml',
+    piece: 'piece',
+    box: 'box',
+    packet: 'packet',
+    bundle: 'bundle',
+    set: 'set',
+  },
+  ta: {
+    kg: 'கிலோ',
+    gram: 'கிராம்',
+    quintal: 'குவிண்டல்',
+    ton: 'டன்',
+    bag: 'பை',
+    litre: 'லிட்டர்',
+    ml: 'மில்லி',
+    piece: 'துண்டு',
+    box: 'பெட்டி',
+    packet: 'பாக்கெட்',
+    bundle: 'கட்டு',
+    set: 'தொகுதி',
+  },
+} as const;
+
+const COPY = {
+  en: {
+    namePlaceholder: 'e.g. Urea (45 kg bag) or paddy seeds',
+    hsnPlaceholder: 'e.g. 3102',
+    nameRequired: 'Product name is required.',
+    invalidPrice: 'Enter a valid fixed price greater than 0.',
+    saveFailed: 'Failed to save product.',
+    rateLocked: 'Only an administrator can change this rate.',
+    gstHint: 'Choose the applicable GST percentage.',
+    activeHint: 'Inactive products are hidden from the billing counter.',
+  },
+  ta: {
+    namePlaceholder: 'எ.கா. யூரியா (45 கிலோ பை) அல்லது நெல் விதைகள்',
+    hsnPlaceholder: 'எ.கா. 3102',
+    nameRequired: 'பொருளின் பெயர் அவசியம்.',
+    invalidPrice: '0-ஐ விட பெரிய சரியான நிலையான விலையை உள்ளிடவும்.',
+    saveFailed: 'பொருளைச் சேமிக்க முடியவில்லை.',
+    rateLocked: 'இந்த விலையை நிர்வாகி மட்டுமே மாற்றலாம்.',
+    gstHint: 'பொருந்தும் GST சதவீதத்தைத் தேர்ந்தெடுக்கவும்.',
+    activeHint: 'செயலிழக்கப்பட்ட பொருட்கள் பில்லிங் கவுண்டரில் தெரியாது.',
+  },
+} as const;
 
 export const ProductModal: React.FC<ProductModalProps> = ({
   isOpen,
@@ -46,6 +116,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   onSave,
   onClose,
 }) => {
+  const { language, t } = useSettings();
+  const copy = COPY[language];
   const [name, setName] = useState('');
   const [category, setCategory] = useState<ProductCategory>('Seeds');
   const [unit, setUnit] = useState<UnitType>('kg');
@@ -85,18 +157,18 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError('');
 
     if (!name.trim()) {
-      setError('Product Name is required.');
+      setError(copy.nameRequired);
       return;
     }
 
-    const numPrice = parseFloat(price);
-    if (isNaN(numPrice) || numPrice <= 0) {
-      setError('Please enter a valid fixed price greater than 0.');
+    const numericPrice = parseFloat(price);
+    if (isNaN(numericPrice) || numericPrice <= 0) {
+      setError(copy.invalidPrice);
       return;
     }
 
@@ -106,207 +178,210 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         name: name.trim(),
         category,
         unit,
-        price: numPrice,
+        price: numericPrice,
         gstRate,
         hsnCode: hsnCode.trim() || undefined,
         stockQuantity: stockQuantity ? parseFloat(stockQuantity) : undefined,
         minStockAlert: minStockAlert ? parseFloat(minStockAlert) : undefined,
-        active
+        active,
       });
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Failed to save product');
+      setError(err?.message || copy.saveFailed);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-gray-200">
-        <div className="bg-agri-800 text-white p-4 flex items-center justify-between">
-          <h3 className="font-bold text-base flex items-center space-x-2">
-            <span>📦</span>
-            <span>{product ? 'Edit Agricultural Product' : 'Add New Agricultural Product'}</span>
-          </h3>
-          <button onClick={onClose} className="p-1 text-agri-200 hover:text-white rounded-lg hover:bg-white/10">
-            <X className="w-5 h-5" />
+    <div className="modal-overlay animate-fade-in p-3 md:p-4" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+      <div className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-primary-200 bg-white shadow-soft-lg">
+        <header className="flex items-center justify-between border-b border-primary-100 bg-primary-50 px-5 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary-200 bg-white text-secondary-700">
+              <Package size={20} aria-hidden="true" />
+            </div>
+            <h2 id="product-modal-title" className="truncate text-base font-semibold text-primary-900">
+              {product ? t.editProductTitle : t.addProductTitle}
+            </h2>
+          </div>
+          <button type="button" onClick={onClose} className="btn-ghost p-2" aria-label={t.close} title={t.close}>
+            <X size={19} aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto p-5" aria-busy={isSubmitting}>
           {error && (
-            <div className="bg-rose-50 border-l-4 border-rose-600 p-3 rounded-lg text-rose-800 text-xs font-semibold flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="flex items-start gap-2 rounded-xl border border-error/30 bg-error-bg p-3 text-xs font-semibold text-error" role="alert">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Product Name */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">
-              Product Name <span className="text-rose-600">*</span>
+            <label htmlFor="product-name" className="label-arch">
+              {t.productName} <span className="text-error">*</span>
             </label>
             <input
+              id="product-name"
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Urea (45kg Bag) / Paddy Seeds"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
+              onChange={(event) => setName(event.target.value)}
+              placeholder={copy.namePlaceholder}
+              className="input-arch"
               autoFocus
+              aria-required="true"
             />
           </div>
 
-          {/* Category & Unit */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                Category <span className="text-rose-600">*</span>
+              <label htmlFor="product-category" className="label-arch">
+                {t.productCategory} <span className="text-error">*</span>
               </label>
               <select
+                id="product-category"
                 value={category}
-                onChange={(e) => setCategory(e.target.value as ProductCategory)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none bg-white"
+                onChange={(event) => setCategory(event.target.value as ProductCategory)}
+                className="input-arch"
+                aria-required="true"
               >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
+                {CATEGORIES.map((item) => (
+                  <option key={item} value={item}>
+                    {t[CATEGORY_LABEL_KEYS[item]]}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                Unit of Measurement <span className="text-rose-600">*</span>
+              <label htmlFor="product-unit" className="label-arch">
+                {t.unitType} <span className="text-error">*</span>
               </label>
               <select
+                id="product-unit"
                 value={unit}
-                onChange={(e) => setUnit(e.target.value as UnitType)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none bg-white"
+                onChange={(event) => setUnit(event.target.value as UnitType)}
+                className="input-arch"
+                aria-required="true"
               >
-                {UNITS.map((u) => (
-                  <option key={u} value={u}>
-                    {u}
+                {UNITS.map((item) => (
+                  <option key={item} value={item}>
+                    {UNIT_LABELS[language][item]}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Fixed Price & GST Rate */}
-          <div className="grid grid-cols-2 gap-3 bg-agri-50/70 p-3 rounded-xl border border-agri-200">
+          <div className="grid grid-cols-1 gap-3 rounded-xl border border-primary-100 bg-primary-50/70 p-3 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold text-agri-900 mb-1">
-                Fixed Counter Rate (₹) <span className="text-rose-600">*</span>
+              <label htmlFor="product-price" className="label-arch">
+                {t.sellingPrice} <span className="text-error">*</span>
               </label>
               <input
+                id="product-price"
                 type="number"
                 step="0.01"
                 min="0.01"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(event) => setPrice(event.target.value)}
                 placeholder="0.00"
-                className="w-full px-3 py-2 text-sm font-mono font-bold border-2 border-agri-600 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none bg-white"
+                className="input-arch font-mono font-semibold"
+                aria-describedby="product-price-hint"
+                aria-required="true"
               />
-              <span className="text-[10px] text-gray-500 mt-0.5 block">
-                Billing operators cannot edit this rate.
+              <span id="product-price-hint" className="mt-1 block text-[10px] text-text-tertiary">
+                {copy.rateLocked}
               </span>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-agri-900 mb-1">
-                GST Rate (%) <span className="text-rose-600">*</span>
+              <label htmlFor="product-gst" className="label-arch">
+                {t.gstRate} <span className="text-error">*</span>
               </label>
               <select
+                id="product-gst"
                 value={gstRate}
-                onChange={(e) => setGstRate(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none bg-white font-bold"
+                onChange={(event) => setGstRate(Number(event.target.value))}
+                className="input-arch font-semibold"
+                aria-describedby="product-gst-hint"
+                aria-required="true"
               >
                 {GST_RATES.map((rate) => (
                   <option key={rate} value={rate}>
-                    {rate}% GST
+                    {formatNumber(rate, language)}% GST
                   </option>
                 ))}
               </select>
-              <span className="text-[10px] text-gray-500 mt-0.5 block">
-                Seeds: 0%, Fertilizers: 5%, Tools: 12%, etc.
+              <span id="product-gst-hint" className="mt-1 block text-[10px] text-text-tertiary">
+                {copy.gstHint}
               </span>
             </div>
           </div>
 
-          {/* HSN & Stock Quantity */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                HSN/SAC Code
-              </label>
+              <label htmlFor="product-hsn" className="label-arch">{t.hsnCode}</label>
               <input
+                id="product-hsn"
                 type="text"
                 value={hsnCode}
-                onChange={(e) => setHsnCode(e.target.value)}
-                placeholder="e.g. 3102"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none font-mono"
+                onChange={(event) => setHsnCode(event.target.value)}
+                placeholder={copy.hsnPlaceholder}
+                className="input-arch font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                Current Stock Qty
-              </label>
+              <label htmlFor="product-stock" className="label-arch">{t.stockQuantity}</label>
               <input
+                id="product-stock"
                 type="number"
                 value={stockQuantity}
-                onChange={(e) => setStockQuantity(e.target.value)}
+                onChange={(event) => setStockQuantity(event.target.value)}
                 placeholder="100"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
+                className="input-arch"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                Min Stock Alert
-              </label>
+              <label htmlFor="product-min-stock" className="label-arch">{t.minStockAlert}</label>
               <input
+                id="product-min-stock"
                 type="number"
                 value={minStockAlert}
-                onChange={(e) => setMinStockAlert(e.target.value)}
+                onChange={(event) => setMinStockAlert(event.target.value)}
                 placeholder="10"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
+                className="input-arch"
               />
             </div>
           </div>
 
-          {/* Active / Inactive status */}
-          <div className="flex items-center space-x-2 pt-1">
+          <div className="flex items-start gap-2 pt-1">
             <input
               type="checkbox"
               id="activeStatus"
               checked={active}
-              onChange={(e) => setActive(e.target.checked)}
-              className="w-4 h-4 text-agri-700 rounded border-gray-300 focus:ring-agri-600"
+              onChange={(event) => setActive(event.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-primary-300"
+              aria-describedby="active-status-hint"
             />
-            <label htmlFor="activeStatus" className="text-xs font-bold text-gray-700 cursor-pointer">
-              Active in Counter Billing (Uncheck to hide from product list)
-            </label>
+            <div>
+              <label htmlFor="activeStatus" className="cursor-pointer text-xs font-semibold text-text-secondary">
+                {t.activeStatus}
+              </label>
+              <p id="active-status-hint" className="mt-0.5 text-[10px] text-text-tertiary">{copy.activeHint}</p>
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
-            >
-              Cancel
+          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-primary-100 pt-4">
+            <button type="button" onClick={onClose} className="btn-light px-4 py-2 text-xs">
+              {t.cancel}
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2 text-xs font-bold text-white bg-agri-700 hover:bg-agri-800 rounded-xl shadow transition-colors flex items-center space-x-1.5"
-            >
-              <Save className="w-4 h-4 text-agri-gold" />
-              <span>{isSubmitting ? 'Saving...' : product ? 'Update Product' : 'Add Product'}</span>
+            <button type="submit" disabled={isSubmitting} className="btn-primary px-5 py-2 text-xs">
+              <Save size={15} aria-hidden="true" />
+              <span>{isSubmitting ? t.saving : product ? t.save : t.addProductTitle}</span>
             </button>
           </div>
         </form>

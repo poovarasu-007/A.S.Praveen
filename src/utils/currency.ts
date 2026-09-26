@@ -1,36 +1,20 @@
 /**
- * Currency and Number-to-Words utilities for Indian Rupee (INR)
+ * Currency and number-to-words utilities for Indian Rupee (INR).
+ * Formatting is delegated to Intl so the active English/Tamil locale is
+ * respected without changing stored numeric values.
  */
+import { formatCurrency as formatLocalizedCurrency, type LanguageCode } from './i18n';
 
-export function formatCurrency(amount: number | null | undefined): string {
-  if (amount === null || amount === undefined || isNaN(amount)) {
-    return '₹0.00';
-  }
-  
-  const isNegative = amount < 0;
-  const absAmount = Math.abs(amount);
-  const fixed = absAmount.toFixed(2);
-  const [integerPart, decimalPart] = fixed.split('.');
-
-  // Indian numbering system: 3 digits for rightmost group, then groups of 2 digits
-  let result = '';
-  const len = integerPart.length;
-
-  if (len <= 3) {
-    result = integerPart;
-  } else {
-    const lastThree = integerPart.substring(len - 3);
-    const otherNumbers = integerPart.substring(0, len - 3);
-    const formattedOthers = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-    result = `${formattedOthers},${lastThree}`;
-  }
-
-  return `${isNegative ? '-' : ''}₹${result}.${decimalPart}`;
+export function formatCurrency(amount: number | null | undefined, language: LanguageCode = 'en'): string {
+  return formatLocalizedCurrency(amount, language);
 }
 
 const singleDigits = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
 const twoDigits = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
 const tensDigits = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+const tamilSingles = ['', 'ஒன்று', 'இரண்டு', 'மூன்று', 'நான்கு', 'ஐந்து', 'ஆறு', 'ஏழு', 'எட்டு', 'ஒன்பது'];
+const tamilTeens = ['பத்து', 'பதினொன்று', 'பன்னிரண்டு', 'பதின்மூன்று', 'பதினான்கு', 'பதினைந்து', 'பதினாறு', 'பதினேழு', 'பதினெட்டு', 'பதினொன்பது'];
+const tamilTens = ['', '', 'இருபது', 'முப்பது', 'நாற்பது', 'ஐம்பது', 'அறுபது', 'எழுபது', 'எண்பது', 'தொண்பது'];
 
 function convertTwoDigits(num: number): string {
   if (num < 10) return singleDigits[num];
@@ -54,9 +38,36 @@ function convertThreeDigits(num: number): string {
   return str.trim();
 }
 
-export function numberToWords(amount: number): string {
+function convertTwoDigitsTamil(num: number): string {
+  if (num < 10) return tamilSingles[num];
+  if (num < 20) return tamilTeens[num - 10];
+  const ten = Math.floor(num / 10);
+  const single = num % 10;
+  return `${tamilTens[ten]}${single > 0 ? ` ${tamilSingles[single]}` : ''}`;
+}
+
+function convertThreeDigitsTamil(num: number): string {
+  const hundred = Math.floor(num / 100);
+  const rest = num % 100;
+  let str = '';
+  if (hundred > 0) {
+    str += 'நூற்று';
+    if (rest > 0) str += ' ';
+  }
+  if (rest > 0) str += convertTwoDigitsTamil(rest);
+  return str.trim();
+}
+
+export function numberToWords(amount: number, language: LanguageCode = 'en'): string {
+  const rupeeWord = language === 'ta' ? 'ரூபாய்' : 'Rupees';
+  const zeroWord = language === 'ta' ? 'பூஜ்யம்' : 'Zero';
+  const onlyWord = language === 'ta' ? 'மட்டும்' : 'Only';
+  const paisaWord = language === 'ta' ? 'பைசா' : 'Paise';
+  const tamil = language === 'ta';
+  const convertTwo = tamil ? convertTwoDigitsTamil : convertTwoDigits;
+  const convertThree = tamil ? convertThreeDigitsTamil : convertThreeDigits;
   if (amount === null || amount === undefined || isNaN(amount) || amount === 0) {
-    return 'Rupees Zero Only';
+    return `${rupeeWord} ${zeroWord} ${onlyWord}`;
   }
 
   const rounded = Math.round((amount + Number.EPSILON) * 100) / 100;
@@ -64,7 +75,7 @@ export function numberToWords(amount: number): string {
   const paisa = Math.round((Math.abs(rounded) - integerPart) * 100);
 
   if (integerPart === 0 && paisa === 0) {
-    return 'Rupees Zero Only';
+    return `${rupeeWord} ${zeroWord} ${onlyWord}`;
   }
 
   let words = '';
@@ -82,24 +93,24 @@ export function numberToWords(amount: number): string {
   const hundreds = temp;
 
   if (crore > 0) {
-    words += `${convertTwoDigits(crore)} Crore `;
+    words += `${convertTwo(crore)} ${tamil ? 'கோடி' : 'Crore'} `;
   }
   if (lakh > 0) {
-    words += `${convertTwoDigits(lakh)} Lakh `;
+    words += `${convertTwo(lakh)} ${tamil ? 'இலட்சம்' : 'Lakh'} `;
   }
   if (thousand > 0) {
-    words += `${convertTwoDigits(thousand)} Thousand `;
+    words += `${convertTwo(thousand)} ${tamil ? 'ஆயிரம்' : 'Thousand'} `;
   }
   if (hundreds > 0) {
-    words += `${convertThreeDigits(hundreds)} `;
+    words += `${convertThree(hundreds)} `;
   }
 
   words = words.trim();
-  let result = words.length > 0 ? `Rupees ${words}` : 'Rupees';
+  let result = words.length > 0 ? `${rupeeWord} ${words}` : rupeeWord;
 
   if (paisa > 0) {
-    result += ` and ${convertTwoDigits(paisa)} Paise`;
+    result += ` ${tamil ? 'மற்றும்' : 'and'} ${convertTwo(paisa)} ${paisaWord}`;
   }
 
-  return `${result} Only`;
+  return `${result} ${onlyWord}`;
 }

@@ -1,0 +1,17 @@
+{
+  "short_name": "ASP Billing",
+  "name": "A.S. Praveen Traders Agricultural Billing System",
+  "description": "Agricultural products and farm-inputs billing system for A.S. Praveen Traders",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23023337'/><path d='M50 77V31m0 18c-12-2-20-9-22-21 12 1 20 8 22 21Zm0 0c12-2 20-9 22-21-12 1-20 8-22 21Z' fill='none' stroke='%23C1E6BA' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/></svg>",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#E3F5DD",
+  "theme_color": "#023337",
+  "display": "standalone",
+  "orientation": "any"
+}

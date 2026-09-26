@@ -13,8 +13,8 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 
-/* ── Nav section type — exported so App.tsx can use it ─────────── */
 export type NavSection =
   | 'dashboard'
   | 'billing'
@@ -26,26 +26,6 @@ export type NavSection =
   | 'users'
   | 'settings'
   | 'audit';
-
-interface NavItem {
-  id: NavSection;
-  label: string;
-  icon: React.ReactNode;
-  adminOnly?: boolean;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard',  label: 'Dashboard',     icon: <LayoutDashboard size={17} /> },
-  { id: 'billing',    label: 'Billing',        icon: <ShoppingCart size={17} /> },
-  { id: 'products',   label: 'Products',       icon: <Package size={17} /> },
-  { id: 'customers',  label: 'Customers',      icon: <Users size={17} /> },
-  { id: 'history',    label: 'Bill History',   icon: <History size={17} /> },
-  { id: 'reports',    label: 'Sales Reports',  icon: <BarChart3 size={17} /> },
-  { id: 'backup',     label: 'Backup',         icon: <Database size={17} /> },
-  { id: 'users',      label: 'User Mgmt',      icon: <UserCog size={17} />, adminOnly: true },
-  { id: 'settings',   label: 'Settings',       icon: <Settings size={17} />, adminOnly: true },
-  { id: 'audit',      label: 'Audit Log',      icon: <ClipboardList size={17} />, adminOnly: true },
-];
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -61,8 +41,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
 }) => {
   const { isAdmin } = useAuth();
+  const { t } = useSettings();
 
-  const visibleItems = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
+  const navItems: { id: NavSection; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
+    { id: 'dashboard',  label: t.dashboard,     icon: <LayoutDashboard size={18} /> },
+    { id: 'billing',    label: t.billing,       icon: <ShoppingCart size={18} /> },
+    { id: 'products',   label: t.products,      icon: <Package size={18} /> },
+    { id: 'customers',  label: t.customers,     icon: <Users size={18} /> },
+    { id: 'history',    label: t.billHistory,   icon: <History size={18} /> },
+    { id: 'reports',    label: t.reports,       icon: <BarChart3 size={18} /> },
+    { id: 'backup',     label: t.backup,        icon: <Database size={18} /> },
+    { id: 'users',      label: t.users,         icon: <UserCog size={18} />, adminOnly: true },
+    { id: 'settings',   label: t.settings,      icon: <Settings size={18} />, adminOnly: true },
+    { id: 'audit',      label: t.auditLogs,     icon: <ClipboardList size={18} />, adminOnly: true },
+  ];
+
+  const visibleItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
   const handleSelect = (section: NavSection) => {
     onSelectSection(section);
@@ -73,35 +67,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <nav className="flex flex-col h-full py-4 px-3 gap-1">
       {/* Section label */}
       <p
-        className="px-3 py-2 text-[10px] uppercase tracking-widest mb-1"
-        style={{ color: 'rgba(92,124,137,0.5)', letterSpacing: '0.15em' }}
+        className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider mb-1 text-[#C1E6BA]/80"
+        style={{ letterSpacing: '0.12em' }}
       >
-        Navigation
+        {t.navNavigation}
       </p>
 
-      {visibleItems.map((item) => (
-        <button
-          key={item.id}
-          id={`nav-${item.id}`}
-          onClick={() => handleSelect(item.id)}
-          className={`nav-item w-full text-left ${currentSection === item.id ? 'active' : ''}`}
-        >
-          <span className="flex-shrink-0">{item.icon}</span>
-          <span>{item.label}</span>
-        </button>
-      ))}
-
-      {/* Admin section label */}
-      {isAdmin && (
-        <>
-          <div className="divider-arch my-3 mx-1" />
-          <p
-            className="px-3 py-1 text-[10px] uppercase tracking-widest mb-1"
-            style={{ color: 'rgba(92,124,137,0.5)', letterSpacing: '0.15em' }}
+      {visibleItems.map((item) => {
+        const isActive = currentSection === item.id;
+        return (
+          <button
+            key={item.id}
+            id={`nav-${item.id}`}
+            onClick={() => handleSelect(item.id)}
+            aria-current={isActive ? 'page' : undefined}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-180 cursor-pointer select-none text-left ${
+              isActive
+                ? 'bg-[#C1E6BA] text-[#023337] shadow-sm font-bold'
+                : 'text-white/80 hover:text-white hover:bg-[#145046]'
+            }`}
           >
-            Administration
+            <span className={`flex-shrink-0 ${isActive ? 'text-[#023337]' : 'text-[#C1E6BA]'}`}>
+              {item.icon}
+            </span>
+            <span className="truncate">{item.label}</span>
+          </button>
+        );
+      })}
+
+      {/* Admin section label if admin */}
+      {isAdmin && (
+        <div className="mt-2 pt-2 border-t border-[#124B46]">
+          <p
+            className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider mb-1 text-[#C1E6BA]/80"
+            style={{ letterSpacing: '0.12em' }}
+          >
+            {t.navAdministration}
           </p>
-        </>
+        </div>
       )}
     </nav>
   );
@@ -110,54 +113,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* ── Desktop Sidebar ─────────────────────────────────────── */}
       <aside
-        className="hidden lg:flex flex-col w-56 flex-shrink-0 no-print overflow-y-auto"
+        className="hidden lg:flex flex-col w-60 flex-shrink-0 no-print overflow-y-auto z-10"
         style={{
-          background: 'rgba(0, 10, 20, 0.85)',
-          borderRight: '1px solid rgba(92,124,137,0.12)',
+          background: '#023337',
+          borderRight: '1px solid rgba(193, 230, 186, 0.2)',
         }}
       >
         {sidebarContent}
       </aside>
 
-      {/* ── Mobile Overlay ──────────────────────────────────────── */}
+      {/* ── Mobile Sidebar Drawer ───────────────────────────────── */}
       {isOpenMobile && (
-        <>
+        <div className="fixed inset-0 z-50 lg:hidden flex no-print">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 bg-[#023337]/60 backdrop-blur-sm"
             onClick={onCloseMobile}
           />
 
-          {/* Slide-in drawer */}
-          <aside
-            className="fixed left-0 top-0 bottom-0 z-50 w-64 flex flex-col overflow-y-auto animate-slide-in-left lg:hidden"
-            style={{
-              background: 'rgba(0, 10, 20, 0.97)',
-              borderRight: '1px solid rgba(92,124,137,0.18)',
-            }}
+          {/* Drawer Panel */}
+          <div
+            className="relative flex-1 flex flex-col max-w-xs w-full shadow-2xl z-10"
+            style={{ background: '#023337' }}
           >
-            {/* Close button */}
-            <div
-              className="flex items-center justify-between px-4 h-14 flex-shrink-0"
-              style={{ borderBottom: '1px solid rgba(92,124,137,0.12)' }}
-            >
-              <span
-                className="font-display font-medium text-sm text-white/80 tracking-wider"
-                style={{ letterSpacing: '0.08em' }}
-              >
-                MENU
+            <div className="flex items-center justify-between p-4 border-b border-[#124B46]">
+              <span className="font-display font-bold text-white text-base">
+                {t.brandName}
               </span>
               <button
                 onClick={onCloseMobile}
-                className="btn-ghost p-2"
-                aria-label="Close sidebar"
+                className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-[#145046]"
+                aria-label={t.close}
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
-            {sidebarContent}
-          </aside>
-        </>
+            <div className="flex-1 overflow-y-auto">
+              {sidebarContent}
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

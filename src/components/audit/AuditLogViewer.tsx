@@ -1,130 +1,25 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Filter, Search, ShieldAlert } from 'lucide-react';
 import { db } from '../../db/db';
-import { ShieldAlert, Search, Filter, ShieldCheck, Clock, Calendar } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
+import { formatDateTimeValue } from '../../utils/i18n';
+import { formatTime } from '../../utils/date';
 
 export const AuditLogViewer: React.FC = () => {
+  const { t, language } = useSettings();
   const auditLogs = useLiveQuery(() => db.auditLogs.orderBy('timestamp').reverse().toArray(), []) || [];
   const [searchTerm, setSearchTerm] = useState('');
   const [recordFilter, setRecordFilter] = useState('ALL');
-
-  const filtered = auditLogs.filter((log) => {
-    const matchesSearch =
-      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (log.recordId && log.recordId.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    const matchesFilter = recordFilter === 'ALL' || log.recordType === recordFilter;
-    return matchesSearch && matchesFilter;
-  });
+  const filtered = auditLogs.filter((log) => { const query = searchTerm.trim().toLowerCase(); return (!query || log.action.toLowerCase().includes(query) || log.user.toLowerCase().includes(query) || log.details.toLowerCase().includes(query) || Boolean(log.recordId?.toLowerCase().includes(query))) && (recordFilter === 'ALL' || log.recordType === recordFilter); });
+  const filters = ['ALL', 'BILL', 'PRODUCT', 'USER', 'SETTINGS', 'BACKUP', 'AUTH'];
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto pb-8">
-      {/* Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-agri-700 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-            <ShieldAlert className="w-5 h-5 text-agri-gold" />
-          </div>
-          <div>
-            <h2 className="text-lg font-black text-agri-900 tracking-tight">
-              SYSTEM AUDIT LOGS
-            </h2>
-            <p className="text-xs text-gray-500">
-              Immutable security trail for price modifications, bill generations, and deletions
-            </p>
-          </div>
-        </div>
-
-        <div className="text-xs text-gray-600 bg-agri-50 px-3 py-1.5 rounded-xl border border-agri-200 font-medium">
-          Total Recorded Actions: <strong className="text-agri-900 font-mono text-sm">{auditLogs.length}</strong>
-        </div>
-      </div>
-
-      {/* Filter and Search */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-4 flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search audit trail by user, action, details, or bill number..."
-            className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-agri-600 outline-none"
-          />
-        </div>
-
-        <div className="flex items-center space-x-1.5 overflow-x-auto text-xs">
-          {['ALL', 'BILL', 'PRODUCT', 'USER', 'SETTINGS', 'BACKUP', 'AUTH'].map((type) => (
-            <button
-              key={type}
-              onClick={() => setRecordFilter(type)}
-              className={`px-3 py-2 rounded-xl font-bold transition-colors ${
-                recordFilter === type
-                  ? 'bg-agri-700 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Audit Log Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-agri-900 text-white text-xs uppercase tracking-wider">
-              <tr>
-                <th className="py-3 px-3 text-center w-12">#</th>
-                <th className="py-3 px-3 w-36">Date & Time</th>
-                <th className="py-3 px-3 w-32">User</th>
-                <th className="py-3 px-3 w-28">Action</th>
-                <th className="py-3 px-4">Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 text-xs">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-400">
-                    No audit logs matching query.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((log, idx) => (
-                  <tr key={log.id} className="hover:bg-agri-50/40 transition-colors">
-                    <td className="py-3 px-3 text-center text-gray-500 font-medium">{idx + 1}</td>
-                    <td className="py-3 px-3 text-gray-600 whitespace-nowrap">
-                      <div className="font-semibold">{log.date}</div>
-                      <div className="text-[10px] text-gray-400 font-mono">{log.time}</div>
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="font-bold text-gray-900">{log.user}</div>
-                      <span className="text-[10px] uppercase font-bold text-agri-700 bg-agri-50 px-1.5 py-0.5 rounded border border-agri-200">
-                        {log.role}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className="font-bold text-gray-800 block">{log.action}</span>
-                      <span className="text-[10px] font-mono text-gray-500">{log.recordType}</span>
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 font-medium leading-relaxed">
-                      {log.details}
-                      {log.recordId && (
-                        <div className="text-[10px] font-mono text-agri-800 font-bold mt-0.5">
-                          ID: {log.recordId}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-4 pb-8">
+      <section className="card-glass flex flex-wrap items-center justify-between gap-3 p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-900 text-primary-100"><ShieldAlert size={20} aria-hidden="true" /></div><div><h1 className="text-lg font-semibold text-primary-900">{t.auditLogs}</h1><p className="text-xs text-text-tertiary">{t.auditDescription}</p></div></div><div className="rounded-xl border border-primary-100 bg-primary-50 px-3 py-1.5 text-xs text-text-secondary">{t.totalActions}: <strong className="font-mono text-sm text-primary-900">{auditLogs.length}</strong></div></section>
+      <section className="card-glass flex flex-col gap-3 p-4 md:flex-row"><div className="relative flex-1"><Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" aria-hidden="true" /><input type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder={t.searchAudit} className="input-arch pl-10" aria-label={t.search} /></div><div className="flex gap-1.5 overflow-x-auto" role="group" aria-label={t.filter}>{filters.map((filter) => <button key={filter} type="button" onClick={() => setRecordFilter(filter)} aria-pressed={recordFilter === filter} className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${recordFilter === filter ? 'border-primary-900 bg-primary-900 text-white' : 'border-primary-100 bg-primary-50 text-text-secondary hover:bg-primary-100'}`}>{filter}</button>)}</div></section>
+      <section className="card-glass overflow-hidden"><div className="overflow-x-auto"><table className="table-arch"><thead><tr><th>#</th><th>{t.dateTime}</th><th>{t.user}</th><th>{t.auditAction}</th><th>{t.auditDetails}</th></tr></thead><tbody>{filtered.length === 0 ? <tr><td colSpan={5} className="py-12 text-center text-text-tertiary">{t.noAudit}</td></tr> : filtered.map((log, index) => <tr key={log.id}><td className="text-center text-text-tertiary">{index + 1}</td><td className="whitespace-nowrap"><div className="font-semibold text-primary-900">{formatDateTimeValue(log.timestamp, language)}</div><div className="font-mono text-[10px] text-text-tertiary">{formatTime(log.time, language)}</div></td><td><div className="font-semibold text-primary-900">{log.user}</div><span className="badge-arch mt-1 inline-flex text-[10px]">{log.role === 'ADMIN' ? t.roleAdmin : t.roleOperator}</span></td><td><span className="block font-semibold text-primary-900">{log.action}</span><span className="font-mono text-[10px] text-text-tertiary">{log.recordType}</span></td><td className="font-medium leading-relaxed text-text-secondary">{log.details}{log.recordId && <div className="mt-0.5 font-mono text-[10px] font-semibold text-secondary-700">ID: {log.recordId}</div>}</td></tr>)}</tbody></table></div></section>
+      <p className="flex items-center justify-center gap-1 text-center text-[11px] text-text-secondary"><Filter size={12} aria-hidden="true" />{t.auditDescription}</p>
     </div>
   );
 };

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
+import { AlertCircle, Building2, CheckCircle2, PhoneCall, Printer, Save, Settings as SettingsIcon, ShieldCheck } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
-import { Settings, Save, CheckCircle2, AlertCircle, Building2, PhoneCall, ShieldCheck, Printer } from 'lucide-react';
 import type { GstMode } from '../../types';
 
 export const BusinessSettingsView: React.FC = () => {
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings, t } = useSettings();
   const { currentUser, isAdmin } = useAuth();
-
   const [businessName, setBusinessName] = useState(settings.businessName);
   const [tagline, setTagline] = useState(settings.tagline);
   const [gstin, setGstin] = useState(settings.gstin);
@@ -23,309 +22,33 @@ export const BusinessSettingsView: React.FC = () => {
   const [invoiceFooterMessage, setInvoiceFooterMessage] = useState(settings.invoiceFooterMessage);
   const [defaultGstMode, setDefaultGstMode] = useState<GstMode>(settings.defaultGstMode);
   const [defaultPrintFormat, setDefaultPrintFormat] = useState<'80mm' | 'A4'>(settings.defaultPrintFormat);
-
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!businessName.trim() || !gstin.trim() || !mobile1.trim()) {
-      setError('Business Name, GSTIN, and Primary Mobile are mandatory.');
-      return;
-    }
-
+  const handleSave = async (event: React.FormEvent) => {
+    event.preventDefault(); setError('');
+    if (!businessName.trim() || !gstin.trim() || !mobile1.trim()) { setError(t.settingsRequired); return; }
     try {
       setIsSaving(true);
       const completeAddress = `${addressLine1}, ${street}, ${city}, ${district}, ${state} - ${pincode}`;
-
-      const ok = await updateSettings(
-        {
-          businessName: businessName.trim(),
-          tagline: tagline.trim(),
-          gstin: gstin.trim().toUpperCase(),
-          mobile1: mobile1.trim(),
-          mobile2: mobile2.trim(),
-          addressLine1: addressLine1.trim(),
-          street: street.trim(),
-          city: city.trim(),
-          district: district.trim(),
-          state: state.trim(),
-          pincode: pincode.trim(),
-          completeAddress,
-          email: email.trim() || undefined,
-          invoiceFooterMessage: invoiceFooterMessage.trim(),
-          defaultGstMode,
-          defaultPrintFormat
-        },
-        currentUser?.username || 'admin'
-      );
-
-      if (ok) {
-        setFeedback('Settings updated successfully. All changes are reflected immediately on all printed bills.');
-        setTimeout(() => setFeedback(''), 5000);
-      } else {
-        setError('Failed to update settings in local database.');
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Error updating settings');
-    } finally {
-      setIsSaving(false);
-    }
+      const ok = await updateSettings({ businessName: businessName.trim(), tagline: tagline.trim(), gstin: gstin.trim().toUpperCase(), mobile1: mobile1.trim(), mobile2: mobile2.trim(), addressLine1: addressLine1.trim(), street: street.trim(), city: city.trim(), district: district.trim(), state: state.trim(), pincode: pincode.trim(), completeAddress, email: email.trim() || undefined, invoiceFooterMessage: invoiceFooterMessage.trim(), defaultGstMode, defaultPrintFormat }, currentUser?.username || 'admin');
+      if (ok) { setFeedback(t.settingsSaveSuccess); window.setTimeout(() => setFeedback(''), 5000); } else setError(t.error);
+    } catch (err: any) { setError(err?.message || t.error); } finally { setIsSaving(false); }
   };
 
+  const field = (label: string, value: string, setter: (value: string) => void, type = 'text', required = false, extraClass = '') => <div><label className="label-arch">{label}{required && <span className="ml-1 text-error">*</span>}</label><input aria-label={label} type={type} value={value} onChange={(event) => setter(event.target.value)} className={`input-arch ${extraClass}`} required={required} /></div>;
+
   return (
-    <div className="space-y-4 max-w-4xl mx-auto pb-8">
-      {/* Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-agri-700 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-            <Settings className="w-5 h-5 text-agri-gold" />
-          </div>
-          <div>
-            <h2 className="text-lg font-black text-agri-900 tracking-tight">
-              BUSINESS SETTINGS
-            </h2>
-            <p className="text-xs text-gray-500">
-              Configure mandatory invoice header, GST parameters, and default print formats
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-1.5 text-xs text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 font-bold">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>GSTIN & Shop Header Protected</span>
-        </div>
-      </div>
-
-      {feedback && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 animate-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>{feedback}</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-rose-50 border border-rose-300 text-rose-800 p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 animate-in slide-in-from-top-2 duration-200">
-          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
+    <div className="mx-auto max-w-4xl space-y-4 pb-8">
+      <section className="card-glass flex flex-wrap items-center justify-between gap-3 p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-900 text-primary-100"><SettingsIcon size={20} aria-hidden="true" /></div><div><h1 className="text-lg font-semibold text-primary-900">{t.settings}</h1><p className="text-xs text-text-tertiary">{t.settingsDescription}</p></div></div><div className="flex items-center gap-1.5 rounded-xl border border-primary-100 bg-primary-50 px-3 py-1.5 text-xs font-semibold text-secondary-700"><ShieldCheck size={15} aria-hidden="true" />{t.gstProtected}</div></section>
+      {feedback && <div className="flex items-center gap-2 rounded-xl border border-success bg-success-bg p-3 text-xs font-semibold text-secondary-700" role="status"><CheckCircle2 size={16} aria-hidden="true" />{feedback}</div>}
+      {error && <div className="flex items-center gap-2 rounded-xl border border-error bg-error-bg p-3 text-xs font-semibold text-error" role="alert"><AlertCircle size={16} aria-hidden="true" />{error}</div>}
       <form onSubmit={handleSave} className="space-y-4">
-        {/* Business Identity Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-5 space-y-4">
-          <h3 className="font-bold text-sm text-agri-900 flex items-center space-x-2 border-b border-gray-100 pb-2">
-            <Building2 className="w-4 h-4 text-agri-700" />
-            <span>Business Identity & Tax Registration</span>
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">
-                Official Business Name <span className="text-rose-600">*</span>
-              </label>
-              <input
-                type="text"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-bold border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Business Tagline</label>
-              <input
-                type="text"
-                value={tagline}
-                onChange={(e) => setTagline(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">
-                GSTIN (GST Number) <span className="text-rose-600">*</span>
-              </label>
-              <input
-                type="text"
-                value={gstin}
-                onChange={(e) => setGstin(e.target.value.toUpperCase())}
-                className="w-full px-3 py-2 text-sm font-mono font-bold border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none uppercase"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Business Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Numbers & Address */}
-        <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-5 space-y-4">
-          <h3 className="font-bold text-sm text-agri-900 flex items-center space-x-2 border-b border-gray-100 pb-2">
-            <PhoneCall className="w-4 h-4 text-agri-700" />
-            <span>Mobile Numbers & Physical Shop Address</span>
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">
-                Primary Mobile Number <span className="text-rose-600">*</span>
-              </label>
-              <input
-                type="text"
-                value={mobile1}
-                onChange={(e) => setMobile1(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-mono font-bold border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">
-                Secondary Mobile Number
-              </label>
-              <input
-                type="text"
-                value={mobile2}
-                onChange={(e) => setMobile2(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-mono font-bold border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Building No./Flat No.</label>
-              <input
-                type="text"
-                value={addressLine1}
-                onChange={(e) => setAddressLine1(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Road / Street</label>
-              <input
-                type="text"
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">City / Town / Village</label>
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">District</label>
-              <input
-                type="text"
-                value={district}
-                onChange={(e) => setDistrict(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">State</label>
-              <input
-                type="text"
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">PIN Code</label>
-              <input
-                type="text"
-                value={pincode}
-                onChange={(e) => setPincode(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Invoice & Default Print Formats */}
-        <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-5 space-y-4">
-          <h3 className="font-bold text-sm text-agri-900 flex items-center space-x-2 border-b border-gray-100 pb-2">
-            <Printer className="w-4 h-4 text-agri-700" />
-            <span>Billing Defaults & Invoice Footers</span>
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Default GST Calculation Mode</label>
-              <select
-                value={defaultGstMode}
-                onChange={(e) => setDefaultGstMode(e.target.value as GstMode)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none bg-white"
-              >
-                <option value="CGST_SGST">Intra-state (CGST + SGST)</option>
-                <option value="IGST">Inter-state (IGST)</option>
-                <option value="EXEMPT">GST Exempt</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Default Print Output</label>
-              <select
-                value={defaultPrintFormat}
-                onChange={(e) => setDefaultPrintFormat(e.target.value as '80mm' | 'A4')}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none bg-white font-bold"
-              >
-                <option value="80mm">80mm Thermal Receipt (Counter standard)</option>
-                <option value="A4">A4 Tax Invoice (Full page)</option>
-              </select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block font-bold text-gray-700 mb-1">Invoice Footer Note</label>
-              <input
-                type="text"
-                value={invoiceFooterMessage}
-                onChange={(e) => setInvoiceFooterMessage(e.target.value)}
-                placeholder="Thank you message displayed on invoices"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-agri-600 outline-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Submit */}
-        {isAdmin ? (
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="px-6 py-3 bg-agri-700 hover:bg-agri-800 disabled:bg-gray-400 text-white font-bold text-sm rounded-xl shadow-lg flex items-center space-x-2 transition-all active:scale-[0.98]"
-            >
-              <Save className="w-4 h-4 text-agri-gold" />
-              <span>{isSaving ? 'Saving Settings...' : 'Save Settings Changes'}</span>
-            </button>
-          </div>
-        ) : (
-          <p className="text-xs text-center text-gray-500 italic">
-            Settings are view-only for operator accounts. Login as admin to modify.
-          </p>
-        )}
+        <section className="card-glass space-y-4 p-5"><h2 className="flex items-center gap-2 border-b border-border-subtle pb-2 text-sm font-semibold text-primary-900"><Building2 size={16} className="text-secondary-700" aria-hidden="true" />{t.businessIdentity}</h2><div className="grid gap-4 sm:grid-cols-2">{field(t.officialBusinessName, businessName, setBusinessName, 'text', true, 'font-semibold')}{field(t.businessTagline, tagline, setTagline)}{field(t.gstinNumber, gstin, (value) => setGstin(value.toUpperCase()), 'text', true, 'font-mono uppercase')}{field(t.businessEmail, email, setEmail, 'email')}</div></section>
+        <section className="card-glass space-y-4 p-5"><h2 className="flex items-center gap-2 border-b border-border-subtle pb-2 text-sm font-semibold text-primary-900"><PhoneCall size={16} className="text-secondary-700" aria-hidden="true" />{t.contactAddress}</h2><div className="grid gap-4 sm:grid-cols-2">{field(t.primaryMobile, mobile1, setMobile1, 'tel', true, 'font-mono')}{field(t.phone2, mobile2, setMobile2, 'tel', false, 'font-mono')}{field(t.buildingFlat, addressLine1, setAddressLine1)}{field(t.roadStreet, street, setStreet)}{field(t.cityTownVillage, city, setCity)}{field(t.district, district, setDistrict)}{field(t.state, state, setState)}{field(t.pinCode, pincode, setPincode, 'text', false, 'font-mono')}</div></section>
+        <section className="card-glass space-y-4 p-5"><h2 className="flex items-center gap-2 border-b border-border-subtle pb-2 text-sm font-semibold text-primary-900"><Printer size={16} className="text-secondary-700" aria-hidden="true" />{t.billingDefaults}</h2><div className="grid gap-4 sm:grid-cols-2"><div><label className="label-arch" htmlFor="default-gst-mode">{t.defaultGstCalculation}</label><select id="default-gst-mode" value={defaultGstMode} onChange={(event) => setDefaultGstMode(event.target.value as GstMode)} className="input-arch"><option value="CGST_SGST">{t.intraStateTax}</option><option value="IGST">{t.interStateTax}</option><option value="EXEMPT">{t.gstExempt}</option></select></div><div><label className="label-arch" htmlFor="default-print-format">{t.defaultPrintOutput}</label><select id="default-print-format" value={defaultPrintFormat} onChange={(event) => setDefaultPrintFormat(event.target.value as '80mm' | 'A4')} className="input-arch font-semibold"><option value="80mm">{t.thermalOption}</option><option value="A4">{t.a4Option}</option></select></div><div className="sm:col-span-2"><label className="label-arch" htmlFor="invoice-footer">{t.invoiceFooterNote}</label><input id="invoice-footer" type="text" value={invoiceFooterMessage} onChange={(event) => setInvoiceFooterMessage(event.target.value)} placeholder={t.invoiceThankYou} className="input-arch" /></div></div></section>
+        {isAdmin ? <div className="flex justify-end pt-2"><button type="submit" disabled={isSaving} className="btn-primary px-6 py-3 text-sm"><Save size={16} aria-hidden="true" />{isSaving ? t.savingSettings : t.saveSettings}</button></div> : <p className="text-center text-xs italic text-text-tertiary">{t.settingsViewOnly}</p>}
       </form>
     </div>
   );

@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { AlertCircle, CheckCircle2, Key, Plus, ShieldCheck, User as UserIcon, UserCog, X } from 'lucide-react';
 import { db } from '../../db/db';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 import { hashPassword } from '../../utils/security';
-import { formatDate, formatTime } from '../../utils/date';
+import { formatDate } from '../../utils/date';
 import type { User, UserRole } from '../../types';
-import { UserCog, Plus, ShieldCheck, User as UserIcon, CheckCircle2, AlertCircle, Trash2, Key } from 'lucide-react';
 
 export const UserManagement: React.FC = () => {
   const { currentUser } = useAuth();
+  const { t, language } = useSettings();
   const users = useLiveQuery(() => db.users.toArray(), []) || [];
-
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
@@ -18,396 +19,43 @@ export const UserManagement: React.FC = () => {
   const [role, setRole] = useState<UserRole>('OPERATOR');
   const [errorMsg, setErrorMsg] = useState('');
   const [feedback, setFeedback] = useState('');
-
-  // Reset Password State
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [resetUser, setResetUser] = useState<User | null>(null);
   const [resetNewPassword, setResetNewPassword] = useState('');
 
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetUser) return;
-    setErrorMsg('');
+  const audit = async (action: string, recordId: string, details: string) => db.auditLogs.add({ id: `audit_${Date.now()}`, timestamp: new Date().toISOString(), date: formatDate(new Date(), language), time: new Date().toLocaleTimeString(language === 'ta' ? 'ta-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }), user: currentUser?.username || 'admin', role: 'ADMIN', action, recordType: 'USER', recordId, details });
 
-    if (!resetNewPassword || resetNewPassword.length < 4) {
-      setErrorMsg('New password must be at least 4 characters long.');
-      return;
-    }
-
-    try {
-      const passwordHash = await hashPassword(resetNewPassword);
-      await db.users.update(resetUser.id, { passwordHash });
-      const now = new Date().toISOString();
-
-      await db.auditLogs.add({
-        id: `audit_${Date.now()}`,
-        timestamp: now,
-        date: formatDate(new Date()),
-        time: formatTime(new Date()),
-        user: currentUser?.username || 'admin',
-        role: 'ADMIN',
-        action: 'Admin Reset Password',
-        recordType: 'USER',
-        recordId: resetUser.id,
-        details: `Administrator reset password for ${resetUser.username}`
-      });
-
-      setFeedback(`Password for ${resetUser.username} was reset successfully.`);
-      setIsResetOpen(false);
-      setResetUser(null);
-      setResetNewPassword('');
-      setTimeout(() => setFeedback(''), 4000);
-    } catch (err: any) {
-      setErrorMsg('Failed to reset password: ' + err?.message);
-    }
+  const handleResetPassword = async (event: React.FormEvent) => {
+    event.preventDefault(); if (!resetUser) return; setErrorMsg('');
+    if (resetNewPassword.length < 4) { setErrorMsg(t.authMinPassword); return; }
+    try { await db.users.update(resetUser.id, { passwordHash: await hashPassword(resetNewPassword) }); await audit('Admin Reset Password', resetUser.id, `Administrator reset password for ${resetUser.username}`); setFeedback(`${t.success}: ${resetUser.username}`); setIsResetOpen(false); setResetUser(null); setResetNewPassword(''); window.setTimeout(() => setFeedback(''), 4000); } catch (err: any) { setErrorMsg(`${t.error}: ${err?.message || ''}`); }
   };
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-
-    if (!username.trim() || !password.trim() || !name.trim()) {
-      setErrorMsg('Please enter Username, Full Name, and Password.');
-      return;
-    }
-
-    // Check if user already exists
-    const existing = await db.users.where('username').equalsIgnoreCase(username.trim()).first();
-    if (existing) {
-      setErrorMsg('A user with this username already exists.');
-      return;
-    }
-
+  const handleCreateUser = async (event: React.FormEvent) => {
+    event.preventDefault(); setErrorMsg('');
+    if (!username.trim() || !password.trim() || !name.trim()) { setErrorMsg(t.authRequired); return; }
+    if (await db.users.where('username').equalsIgnoreCase(username.trim()).first()) { setErrorMsg(t.usernameExists); return; }
     try {
-      const passwordHash = await hashPassword(password);
-      const now = new Date().toISOString();
-      const newUser: User = {
-        id: `usr_${Date.now()}`,
-        username: username.trim().toLowerCase(),
-        passwordHash,
-        role,
-        name: name.trim(),
-        active: true,
-        createdAt: now
-      };
-
-      await db.users.add(newUser);
-
-      await db.auditLogs.add({
-        id: `audit_${Date.now()}`,
-        timestamp: now,
-        date: formatDate(new Date()),
-        time: formatTime(new Date()),
-        user: currentUser?.username || 'admin',
-        role: 'ADMIN',
-        action: 'Created New User',
-        recordType: 'USER',
-        recordId: newUser.id,
-        details: `Created user ${newUser.username} (${newUser.role})`
-      });
-
-      setFeedback(`User ${newUser.name} created successfully.`);
-      setIsAddOpen(false);
-      setUsername('');
-      setName('');
-      setPassword('');
-      setRole('OPERATOR');
-      setTimeout(() => setFeedback(''), 4000);
-    } catch (err: any) {
-      setErrorMsg('Failed to create user: ' + err?.message);
-    }
+      const newUser: User = { id: `usr_${Date.now()}`, username: username.trim().toLowerCase(), passwordHash: await hashPassword(password), role, name: name.trim(), active: true, createdAt: new Date().toISOString() };
+      await db.users.add(newUser); await audit('Created New User', newUser.id, `Created user ${newUser.username} (${newUser.role})`); setFeedback(`${t.success}: ${newUser.name}`); setIsAddOpen(false); setUsername(''); setName(''); setPassword(''); setRole('OPERATOR'); window.setTimeout(() => setFeedback(''), 4000);
+    } catch (err: any) { setErrorMsg(`${t.error}: ${err?.message || ''}`); }
   };
 
   const handleToggleActive = async (user: User) => {
-    if (user.username === 'admin') {
-      alert('Default admin account cannot be deactivated.');
-      return;
-    }
-
-    const updatedStatus = !user.active;
-    await db.users.update(user.id, { active: updatedStatus });
-
-    await db.auditLogs.add({
-      id: `audit_${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      date: formatDate(new Date()),
-      time: formatTime(new Date()),
-      user: currentUser?.username || 'admin',
-      role: 'ADMIN',
-      action: updatedStatus ? 'Activated User' : 'Deactivated User',
-      recordType: 'USER',
-      recordId: user.id,
-      details: `${updatedStatus ? 'Activated' : 'Deactivated'} ${user.username}`
-    });
-
-    setFeedback(`User ${user.username} is now ${updatedStatus ? 'Active' : 'Deactivated'}.`);
-    setTimeout(() => setFeedback(''), 4000);
+    if (user.username === 'admin') { setErrorMsg(t.settingsViewOnly); return; }
+    const active = !user.active; await db.users.update(user.id, { active }); await audit(active ? 'Activated User' : 'Deactivated User', user.id, `${active ? 'Activated' : 'Deactivated'} ${user.username}`); setFeedback(`${t.success}: ${user.username}`); window.setTimeout(() => setFeedback(''), 4000);
   };
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto pb-8">
-      {/* Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-agri-700 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-            <UserCog className="w-5 h-5 text-agri-gold" />
-          </div>
-          <div>
-            <h2 className="text-lg font-black text-agri-900 tracking-tight">
-              USER ACCOUNTS & PERMISSIONS
-            </h2>
-            <p className="text-xs text-gray-500">
-              Manage billing operators and system administrators
-            </p>
-          </div>
-        </div>
+    <div className="mx-auto max-w-5xl space-y-4 pb-8">
+      <section className="card-glass flex flex-wrap items-center justify-between gap-3 p-4"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-900 text-primary-100"><UserCog size={20} aria-hidden="true" /></div><div><h1 className="text-lg font-semibold text-primary-900">{t.users}</h1><p className="text-xs text-text-tertiary">{t.usersDescription}</p></div></div><button type="button" onClick={() => { setErrorMsg(''); setIsAddOpen(true); }} className="btn-primary px-4 py-2 text-xs"><Plus size={15} aria-hidden="true" />{t.addAccount}</button></section>
+      {feedback && <div className="flex items-center gap-2 rounded-xl border border-success bg-success-bg p-3 text-xs font-semibold text-secondary-700" role="status"><CheckCircle2 size={16} aria-hidden="true" />{feedback}</div>}
+      {errorMsg && !isAddOpen && !isResetOpen && <div className="flex items-center gap-2 rounded-xl border border-error bg-error-bg p-3 text-xs font-semibold text-error" role="alert"><AlertCircle size={16} aria-hidden="true" />{errorMsg}</div>}
+      <section className="card-glass overflow-hidden"><div className="overflow-x-auto"><table className="table-arch"><thead><tr><th>#</th><th>{t.fullName}</th><th>{t.username}</th><th>{t.role}</th><th>{t.status}</th><th>{t.action}</th></tr></thead><tbody>{users.map((user, index) => <tr key={user.id}><td className="text-center text-text-tertiary">{index + 1}</td><td className="font-semibold text-primary-900">{user.name}</td><td className="font-mono text-xs text-text-secondary">@{user.username}</td><td><span className={`badge-${user.role === 'ADMIN' ? 'warning' : 'info'}`}>{user.role === 'ADMIN' ? <ShieldCheck size={13} aria-hidden="true" /> : <UserIcon size={13} aria-hidden="true" />}{user.role === 'ADMIN' ? t.roleAdmin : t.roleOperator}</span></td><td><span className={user.active ? 'badge-success' : 'badge-danger'}>{user.active ? t.active : t.disabled}</span></td><td><div className="flex justify-center gap-1.5"><button type="button" onClick={() => { setResetUser(user); setResetNewPassword(''); setErrorMsg(''); setIsResetOpen(true); }} className="btn-light px-2.5 py-1 text-xs" title={t.resetPassword}><Key size={13} aria-hidden="true" />{t.resetKey}</button>{user.username !== 'admin' && <button type="button" onClick={() => handleToggleActive(user)} className={user.active ? 'btn-danger px-3 py-1 text-xs' : 'btn-light px-3 py-1 text-xs'}>{user.active ? t.deactivate : t.activate}</button>}</div></td></tr>)}</tbody></table></div></section>
 
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="flex items-center space-x-1.5 px-4 py-2 bg-agri-700 hover:bg-agri-800 text-white font-bold text-xs rounded-xl shadow transition-all active:scale-95"
-        >
-          <Plus className="w-4 h-4 text-agri-gold" />
-          <span>Add Operator / Admin</span>
-        </button>
-      </div>
+      {isAddOpen && <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="add-account-title"><div className="w-full max-w-md overflow-hidden rounded-2xl border border-primary-200 bg-white shadow-soft-lg"><div className="flex items-center justify-between bg-primary-900 p-4 text-white"><h2 id="add-account-title" className="font-semibold">{t.addNewAccount}</h2><button type="button" onClick={() => setIsAddOpen(false)} className="rounded p-1 text-primary-100 hover:bg-white/10" aria-label={t.close}><X size={18} aria-hidden="true" /></button></div><form onSubmit={handleCreateUser} className="space-y-3.5 p-5 text-xs">{errorMsg && <div className="flex items-center gap-2 rounded-lg border border-error bg-error-bg p-2.5 font-semibold text-error"><AlertCircle size={15} aria-hidden="true" />{errorMsg}</div>}<div><label className="label-arch" htmlFor="managed-name">{t.fullName}</label><input id="managed-name" className="input-arch" value={name} onChange={(event) => setName(event.target.value)} placeholder={t.fullNamePlaceholder} autoFocus /></div><div><label className="label-arch" htmlFor="managed-username">{t.username}</label><input id="managed-username" className="input-arch font-mono lowercase" value={username} onChange={(event) => setUsername(event.target.value)} placeholder={t.usernamePlaceholder} /></div><div><label className="label-arch" htmlFor="managed-password">{t.password}</label><input id="managed-password" className="input-arch" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder={t.loginPassword} /></div><div><label className="label-arch" htmlFor="managed-role">{t.role}</label><select id="managed-role" className="input-arch" value={role} onChange={(event) => setRole(event.target.value as UserRole)}><option value="OPERATOR">{t.operatorOption}</option><option value="ADMIN">{t.adminOption}</option></select></div><div className="flex justify-end gap-2 border-t border-border-subtle pt-3"><button type="button" onClick={() => setIsAddOpen(false)} className="btn-light px-4 py-2 text-xs">{t.cancel}</button><button type="submit" className="btn-primary px-5 py-2 text-xs">{t.createAccountButton}</button></div></form></div></div>}
 
-      {feedback && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 animate-in slide-in-from-top-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>{feedback}</span>
-        </div>
-      )}
-
-      {/* Users List Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-agri-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-agri-900 text-white text-xs uppercase tracking-wider">
-              <tr>
-                <th className="py-3 px-3 text-center w-12">#</th>
-                <th className="py-3 px-4">Full Name</th>
-                <th className="py-3 px-4">Username</th>
-                <th className="py-3 px-3 text-center">Role</th>
-                <th className="py-3 px-3 text-center">Status</th>
-                <th className="py-3 px-4 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {users.map((u, idx) => (
-                <tr key={u.id} className="hover:bg-agri-50/40">
-                  <td className="py-3 px-3 text-center text-gray-500 font-medium">{idx + 1}</td>
-                  <td className="py-3 px-4 font-bold text-gray-900">{u.name}</td>
-                  <td className="py-3 px-4 font-mono text-xs text-gray-700">@{u.username}</td>
-                  <td className="py-3 px-3 text-center">
-                    <span
-                      className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                        u.role === 'ADMIN'
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                          : 'bg-agri-100 text-agri-800 border border-agri-300'
-                      }`}
-                    >
-                      {u.role === 'ADMIN' ? <ShieldCheck className="w-3.5 h-3.5" /> : <UserIcon className="w-3.5 h-3.5" />}
-                      <span>{u.role}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-center">
-                    <span
-                      className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                        u.active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                      }`}
-                    >
-                      {u.active ? 'Active' : 'Disabled'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          setResetUser(u);
-                          setResetNewPassword('');
-                          setErrorMsg('');
-                          setIsResetOpen(true);
-                        }}
-                        className="text-xs font-bold px-2.5 py-1 rounded-lg bg-agri-50 text-agri-800 hover:bg-agri-100 border border-agri-200 inline-flex items-center gap-1 transition-colors"
-                        title="Reset password"
-                      >
-                        <Key className="w-3 h-3 text-agri-gold" />
-                        <span>Reset Key</span>
-                      </button>
-
-                      {u.username !== 'admin' && (
-                        <button
-                          onClick={() => handleToggleActive(u)}
-                          className={`text-xs font-bold px-3 py-1 rounded-lg transition-colors ${
-                            u.active
-                              ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                          }`}
-                        >
-                          {u.active ? 'Deactivate' : 'Activate'}
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Add User Modal */}
-      {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-200">
-            <div className="bg-agri-800 text-white p-4 flex items-center justify-between">
-              <h3 className="font-bold text-base">Add New Account</h3>
-              <button onClick={() => setIsAddOpen(false)} className="text-agri-200 hover:text-white">
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateUser} className="p-5 space-y-3.5 text-xs">
-              {errorMsg && (
-                <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg font-semibold flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
-
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. S. Kumar"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-agri-600"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">Username (Login ID)</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. kumar"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-agri-600 font-mono lowercase"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter login password"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-agri-600"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">System Role</label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-agri-600 bg-white"
-                >
-                  <option value="OPERATOR">Billing Operator (Counter billing only)</option>
-                  <option value="ADMIN">System Administrator (Full access, price editing, deletions)</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setIsAddOpen(false)}
-                  className="px-4 py-2 font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 font-bold text-white bg-agri-700 hover:bg-agri-800 rounded-xl shadow"
-                >
-                  Create Account
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Reset Password Modal */}
-      {isResetOpen && resetUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-gray-200">
-            <div className="bg-agri-900 text-white p-4 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Key className="w-4 h-4 text-agri-gold" />
-                <h3 className="font-bold text-sm">Reset Password</h3>
-              </div>
-              <button 
-                onClick={() => {
-                  setIsResetOpen(false);
-                  setResetUser(null);
-                }} 
-                className="text-gray-300 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleResetPassword} className="p-5 space-y-3.5 text-xs">
-              <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-                <div className="text-gray-500 font-medium">User Account:</div>
-                <div className="font-bold text-gray-900 text-sm">{resetUser.name} <span className="font-mono text-xs text-gray-500">(@{resetUser.username})</span></div>
-              </div>
-
-              {errorMsg && (
-                <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg font-semibold flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
-
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">New Password</label>
-                <input
-                  type="password"
-                  value={resetNewPassword}
-                  onChange={(e) => setResetNewPassword(e.target.value)}
-                  placeholder="Enter at least 4 characters"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-agri-600"
-                  autoFocus
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsResetOpen(false);
-                    setResetUser(null);
-                  }}
-                  className="px-4 py-2 font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 font-bold text-white bg-agri-700 hover:bg-agri-800 rounded-xl shadow"
-                >
-                  Save Password
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {isResetOpen && resetUser && <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="reset-password-title"><div className="w-full max-w-sm overflow-hidden rounded-2xl border border-primary-200 bg-white shadow-soft-lg"><div className="flex items-center justify-between bg-primary-900 p-4 text-white"><h2 id="reset-password-title" className="flex items-center gap-2 text-sm font-semibold"><Key size={15} aria-hidden="true" />{t.resetPassword}</h2><button type="button" onClick={() => { setIsResetOpen(false); setResetUser(null); }} className="rounded p-1 text-primary-100 hover:bg-white/10" aria-label={t.close}><X size={18} aria-hidden="true" /></button></div><form onSubmit={handleResetPassword} className="space-y-3.5 p-5 text-xs"><div className="rounded-xl border border-primary-100 bg-primary-50 p-2.5"><div className="font-medium text-text-tertiary">{t.userAccount}</div><div className="text-sm font-semibold text-primary-900">{resetUser.name} <span className="font-mono text-xs text-text-tertiary">(@{resetUser.username})</span></div></div>{errorMsg && <div className="flex items-center gap-2 rounded-lg border border-error bg-error-bg p-2.5 font-semibold text-error"><AlertCircle size={15} aria-hidden="true" />{errorMsg}</div>}<div><label className="label-arch" htmlFor="managed-reset-password">{t.newPassword}</label><input id="managed-reset-password" className="input-arch" type="password" value={resetNewPassword} onChange={(event) => setResetNewPassword(event.target.value)} placeholder={t.authMinChars} autoFocus /></div><div className="flex justify-end gap-2 border-t border-border-subtle pt-3"><button type="button" onClick={() => { setIsResetOpen(false); setResetUser(null); }} className="btn-light px-4 py-2 text-xs">{t.cancel}</button><button type="submit" className="btn-primary px-5 py-2 text-xs">{t.savePassword}</button></div></form></div></div>}
     </div>
   );
 };

@@ -1,344 +1,277 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-
+  darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // ─────────────────────────────────────────────
-        // REFERENCE IMAGE — SOFT BOTANICAL GREEN PALETTE
-        // ─────────────────────────────────────────────
-
-        mint: {
-          50: '#F7FCF5',
-          100: '#EAF8E7', // Pale card / light surface
-          200: '#E3F5DD', // Main background
-          300: '#C1E6BA', // Soft green
-          400: '#9ED2A0',
-          500: '#70BC88',
-          600: '#4EA674', // Main green
-          700: '#38895F',
-          800: '#1E684E',
-          900: '#023337', // Deep teal
-          950: '#01282B',
+        // Primitive tokens. Values are duplicated here for Tailwind utility
+        // generation; src/index.css is the source of truth for the live theme.
+        primary: {
+          50: '#EAF8E7',
+          100: '#C1E6BA',
+          200: '#B0DDAA',
+          300: '#91C99A',
+          400: '#70B987',
+          500: '#4DA674',
+          600: '#348667',
+          700: '#216454',
+          800: '#124B46',
+          900: '#023337',
         },
+        secondary: {
+          50: '#EEF8EB',
+          100: '#D2EACB',
+          200: '#B5DEAE',
+          300: '#91CC9A',
+          400: '#6DBB82',
+          500: '#4EA674',
+          600: '#388A64',
+          700: '#287056',
+          800: '#1C5945',
+          900: '#123F35',
+        },
+        background: '#E3F5DD',
+        surface: {
+          DEFAULT: '#FFFFFF',
+          elevated: '#EAF8E7',
+          card: '#FFFFFF',
+          soft: '#C1E6BA',
+          hover: '#F3FAF0',
+        },
+        text: {
+          primary: '#023337',
+          secondary: '#28564B',
+          tertiary: '#55766A',
+          muted: '#668278',
+          placeholder: '#78958A',
+          disabled: '#8AA69B',
+          inverse: '#FFFFFF',
+        },
+        border: {
+          DEFAULT: '#C1E6BA',
+          subtle: 'rgba(2, 51, 55, 0.10)',
+          standard: 'rgba(2, 51, 55, 0.18)',
+          focus: '#4DA674',
+        },
+        status: {
+          success: '#388A64',
+          'success-bg': '#EAF8E7',
+          warning: '#B7791F',
+          'warning-bg': '#FFF7E0',
+          error: '#B42318',
+          'error-bg': '#FDECEC',
+          info: '#287056',
+          'info-bg': '#EAF8E7',
+        },
+        success: { DEFAULT: '#388A64', bg: '#EAF8E7' },
+        warning: { DEFAULT: '#B7791F', bg: '#FFF7E0' },
+        error: { DEFAULT: '#B42318', bg: '#FDECEC' },
+        info: { DEFAULT: '#287056', bg: '#EAF8E7' },
 
-        // Main brand palette
+        // Compatibility aliases for the original agricultural UI. They all
+        // resolve to the botanical system so lazy/legacy components cannot
+        // reintroduce the former navy palette.
+        agri: {
+          50: '#EEF8EB',
+          100: '#EAF8E7',
+          200: '#E3F5DD',
+          300: '#C1E6BA',
+          400: '#91C99A',
+          500: '#70B987',
+          600: '#4DA674',
+          700: '#348667',
+          800: '#216454',
+          900: '#023337',
+          950: '#123F35',
+          gold: '#C1E6BA',
+          light: '#91C99A',
+        },
+        mint: {
+          50: '#EEF8EB',
+          100: '#EAF8E7',
+          200: '#E3F5DD',
+          300: '#C1E6BA',
+          400: '#91C99A',
+          500: '#70B987',
+          600: '#4DA674',
+          700: '#348667',
+          800: '#216454',
+          900: '#023337',
+          950: '#123F35',
+        },
         brand: {
           dark: '#023337',
-          green: '#4EA674',
+          green: '#4DA674',
           soft: '#C1E6BA',
           pale: '#EAF8E7',
           background: '#E3F5DD',
-
-          // Additional compatible shades
-          greenLight: '#70BC88',
-          greenDark: '#38895F',
+          greenLight: '#70B987',
+          greenDark: '#388A64',
           teal: '#023337',
         },
-
-        // Background / surface colors
-        surface: {
-          50: '#F7FCF5',
-          100: '#EAF8E7',
-          200: '#E3F5DD',
-          300: '#C1E6BA',
-        },
-
-        // Keep these aliases if existing components use them
         navy: {
-          950: '#01282B',
+          500: '#4DA674',
+          600: '#348667',
+          700: '#216454',
+          800: '#124B46',
           900: '#023337',
-          800: '#0A4545',
-          700: '#14594F',
-          600: '#28745B',
-          500: '#4EA674',
+          950: '#123F35',
         },
-
         deep: {
+          500: '#4DA674',
+          600: '#348667',
+          700: '#216454',
+          800: '#124B46',
           900: '#023337',
-          800: '#14594F',
-          700: '#28745B',
-          600: '#38895F',
-          500: '#4EA674',
         },
-
         slate: {
-          arch: '#70BC88',
-        },
-
-        charcoal: {
-          900: '#173B36',
-          800: '#245044',
-          700: '#356653',
-          600: '#4A7A65',
-        },
-
-        // Legacy agriculture palette updated to match reference
-        agri: {
-          50: '#F7FCF5',
+          arch: '#70B987',
+          50: '#F3FAF0',
           100: '#EAF8E7',
-          200: '#E3F5DD',
-          300: '#C1E6BA',
-          400: '#9ED2A0',
-          500: '#70BC88',
-          600: '#4EA674',
-          700: '#38895F',
-          800: '#1E684E',
+          200: '#D7E8D2',
+          300: '#B0DDAA',
+          400: '#91C99A',
+          500: '#668278',
+          600: '#55766A',
+          700: '#28564B',
+          800: '#124B46',
           900: '#023337',
-          950: '#01282B',
+        },
+        charcoal: {
+          600: '#55766A',
+          700: '#28564B',
+          800: '#124B46',
+          900: '#023337',
+        },
+
+        // Default palette aliases are intentionally botanical as well. This
+        // lets older utility classes remain readable during incremental
+        // migration without introducing grey/navy/rainbow UI.
+        gray: {
+          50: '#F3FAF0',
+          100: '#EAF8E7',
+          200: '#D7E8D2',
+          300: '#B0DDAA',
+          400: '#91C99A',
+          500: '#78958A',
+          600: '#55766A',
+          700: '#28564B',
+          800: '#124B46',
+          900: '#023337',
+          950: '#123F35',
+        },
+        slateDefault: '#668278',
+        emerald: {
+          50: '#EAF8E7', 100: '#C1E6BA', 200: '#B0DDAA', 300: '#91C99A',
+          400: '#70B987', 500: '#4DA674', 600: '#388A64', 700: '#287056',
+          800: '#216454', 900: '#023337', 950: '#123F35',
+        },
+        green: {
+          50: '#EEF8EB', 100: '#D2EACB', 200: '#B5DEAE', 300: '#91CC9A',
+          400: '#6DBB82', 500: '#4EA674', 600: '#388A64', 700: '#287056',
+          800: '#1C5945', 900: '#123F35', 950: '#102E2A',
+        },
+        teal: {
+          50: '#EAF8E7', 100: '#C1E6BA', 200: '#B0DDAA', 300: '#91C99A',
+          400: '#70B987', 500: '#4DA674', 600: '#348667', 700: '#216454',
+          800: '#124B46', 900: '#023337', 950: '#123F35',
+        },
+        cyan: {
+          50: '#EAF8E7', 100: '#C1E6BA', 200: '#B0DDAA', 300: '#91C99A',
+          400: '#70B987', 500: '#4DA674', 600: '#348667', 700: '#216454',
+          800: '#124B46', 900: '#023337', 950: '#123F35',
+        },
+        blue: {
+          50: '#EAF8E7', 100: '#C1E6BA', 200: '#B0DDAA', 300: '#91C99A',
+          400: '#70B987', 500: '#4DA674', 600: '#348667', 700: '#216454',
+          800: '#124B46', 900: '#023337', 950: '#123F35',
+        },
+        lime: {
+          50: '#EAF8E7', 100: '#C1E6BA', 200: '#B0DDAA', 300: '#91C99A',
+          400: '#70B987', 500: '#4DA674', 600: '#388A64', 700: '#287056',
+          800: '#216454', 900: '#023337', 950: '#123F35',
+        },
+        amber: {
+          50: '#FFF7E0', 100: '#FFF1C2', 200: '#F6D98A', 300: '#E7B85C',
+          400: '#D49A3A', 500: '#B7791F', 600: '#966318', 700: '#6B4A0B',
+          800: '#553B12', 900: '#3E2B0D', 950: '#2B1D09',
+        },
+        yellow: {
+          50: '#FFF7E0', 100: '#F6D98A', 200: '#E7B85C', 300: '#D49A3A',
+          400: '#B7791F', 500: '#966318', 600: '#6B4A0B', 700: '#553B12',
+          800: '#3E2B0D', 900: '#2B1D09',
+        },
+        orange: {
+          50: '#FFF7E0', 100: '#F6D98A', 200: '#E7B85C', 300: '#D49A3A',
+          400: '#B7791F', 500: '#966318', 600: '#6B4A0B', 700: '#553B12',
+          800: '#3E2B0D', 900: '#2B1D09',
+        },
+        red: {
+          50: '#FDECEC', 100: '#F9D5D3', 200: '#F0A9A5', 300: '#E47B75',
+          400: '#D14D46', 500: '#B42318', 600: '#911D14', 700: '#761A13',
+          800: '#5E1710', 900: '#45110C', 950: '#2F0B08',
+        },
+        rose: {
+          50: '#FDECEC', 100: '#F9D5D3', 200: '#F0A9A5', 300: '#E47B75',
+          400: '#D14D46', 500: '#B42318', 600: '#911D14', 700: '#761A13',
+          800: '#5E1710', 900: '#45110C', 950: '#2F0B08',
+        },
+        purple: {
+          50: '#EEF8EB', 100: '#D2EACB', 200: '#B5DEAE', 300: '#91CC9A',
+          400: '#6DBB82', 500: '#4EA674', 600: '#388A64', 700: '#287056',
+          800: '#1C5945', 900: '#123F35', 950: '#102E2A',
         },
       },
-
-      // ─────────────────────────────────────────────
-      // TYPOGRAPHY
-      // ─────────────────────────────────────────────
-
       fontFamily: {
-        display: [
-          '"Playfair Display"',
-          'Cormorant Garamond',
-          'Georgia',
-          'serif',
-        ],
-
-        sans: [
-          'Manrope',
-          'Inter',
-          'system-ui',
-          '-apple-system',
-          'sans-serif',
-        ],
-
-        mono: [
-          '"Courier New"',
-          'Courier',
-          'monospace',
-        ],
+        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        sans: ['"Noto Sans Tamil"', 'Inter', 'Manrope', 'system-ui', '-apple-system', 'sans-serif'],
+        tamil: ['"Noto Sans Tamil"', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['"Courier New"', 'Courier', 'monospace'],
       },
-
-      // ─────────────────────────────────────────────
-      // REFERENCE-STYLE BACKGROUNDS
-      // ─────────────────────────────────────────────
-
       backgroundImage: {
-        // Main pale green background
-        'botanical-bg':
-          'linear-gradient(180deg, #E3F5DD 0%, #EAF8E7 100%)',
-
-        // Soft green gradient
-        'green-gradient':
-          'linear-gradient(135deg, #023337 0%, #4EA674 100%)',
-
-        // Light green gradient
-        'mint-gradient':
-          'linear-gradient(135deg, #C1E6BA 0%, #EAF8E7 100%)',
-
-        // Dark-to-green gradient
-        'brand-gradient':
-          'linear-gradient(135deg, #023337 0%, #4EA674 100%)',
-
-        // Soft radial background
-        'arch-radial':
-          'radial-gradient(ellipse 80% 60% at 50% 100%, #C1E6BA 0%, #E3F5DD 60%, #EAF8E7 100%)',
-
-        'arch-inner':
-          'radial-gradient(ellipse 60% 80% at 50% 110%, #4EA674 0%, transparent 70%)',
-
-        // Navigation active state
-        'nav-active':
-          'linear-gradient(90deg, #C1E6BA 0%, rgba(78,166,116,0.35) 100%)',
+        'botanical-bg': 'linear-gradient(180deg, #E3F5DD 0%, #EAF8E7 100%)',
+        'green-gradient': 'linear-gradient(135deg, #023337 0%, #4DA674 100%)',
+        'mint-gradient': 'linear-gradient(135deg, #C1E6BA 0%, #EAF8E7 100%)',
+        'brand-gradient': 'linear-gradient(135deg, #023337 0%, #4DA674 100%)',
+        'arch-radial': 'radial-gradient(ellipse 80% 60% at 50% 100%, #C1E6BA 0%, #E3F5DD 60%, #EAF8E7 100%)',
+        'nav-active': 'linear-gradient(90deg, #C1E6BA 0%, rgba(77,166,116,0.25) 100%)',
       },
-
-      // ─────────────────────────────────────────────
-      // SHADOWS
-      // ─────────────────────────────────────────────
-
       boxShadow: {
-        // Soft reference-image shadow
-        'soft':
-          '0 8px 24px rgba(2, 51, 55, 0.10)',
-
-        'soft-lg':
-          '0 12px 35px rgba(2, 51, 55, 0.14)',
-
-        'green':
-          '0 8px 24px rgba(78, 166, 116, 0.25)',
-
-        'green-lg':
-          '0 12px 40px rgba(78, 166, 116, 0.30)',
-
-        // Updated architectural aliases
-        'arch-glow':
-          '0 0 60px rgba(78, 166, 116, 0.18), 0 0 120px rgba(193, 230, 186, 0.15)',
-
-        'card-glass':
-          '0 4px 24px rgba(2, 51, 55, 0.12), inset 0 1px 0 rgba(255,255,255,0.6)',
-
-        'input-focus':
-          '0 0 0 2px rgba(78, 166, 116, 0.35)',
-
-        'btn-hover':
-          '0 8px 24px rgba(78, 166, 116, 0.30)',
+        'soft-sm': '0 2px 8px rgba(2, 51, 55, 0.06)',
+        soft: '0 6px 20px rgba(2, 51, 55, 0.08)',
+        'soft-lg': '0 12px 35px rgba(2, 51, 55, 0.12)',
+        card: '0 4px 16px rgba(2, 51, 55, 0.06)',
+        'card-hover': '0 10px 28px rgba(2, 51, 55, 0.12)',
+        'input-focus': '0 0 0 3px rgba(77, 166, 116, 0.20)',
+        'btn-hover': '0 8px 24px rgba(2, 51, 55, 0.18)',
       },
-
-      // ─────────────────────────────────────────────
-      // BORDERS
-      // ─────────────────────────────────────────────
-
       borderColor: {
-        glass: 'rgba(78, 166, 116, 0.25)',
-        'glass-light': 'rgba(78, 166, 116, 0.15)',
+        DEFAULT: '#C1E6BA',
         mint: '#C1E6BA',
-        green: '#4EA674',
+        green: '#4DA674',
+        subtle: 'rgba(2, 51, 55, 0.10)',
+        standard: 'rgba(2, 51, 55, 0.18)',
       },
-
-      // ─────────────────────────────────────────────
-      // ANIMATIONS
-      // ─────────────────────────────────────────────
-
       keyframes: {
-        'arch-reveal': {
-          '0%': {
-            opacity: '0',
-            transform: 'scaleY(0.8) translateY(30px)',
-          },
-          '100%': {
-            opacity: '1',
-            transform: 'scaleY(1) translateY(0)',
-          },
-        },
-
-        'fade-up': {
-          '0%': {
-            opacity: '0',
-            transform: 'translateY(20px)',
-          },
-          '100%': {
-            opacity: '1',
-            transform: 'translateY(0)',
-          },
-        },
-
-        'fade-in': {
-          '0%': {
-            opacity: '0',
-          },
-          '100%': {
-            opacity: '1',
-          },
-        },
-
-        float: {
-          '0%, 100%': {
-            transform: 'translateY(0)',
-          },
-          '50%': {
-            transform: 'translateY(-8px)',
-          },
-        },
-
-        shimmer: {
-          '0%': {
-            backgroundPosition: '-200% 0',
-          },
-          '100%': {
-            backgroundPosition: '200% 0',
-          },
-        },
-
-        'pulse-soft': {
-          '0%, 100%': {
-            opacity: '1',
-          },
-          '50%': {
-            opacity: '0.6',
-          },
-        },
-
-        'slide-in-left': {
-          '0%': {
-            opacity: '0',
-            transform: 'translateX(-20px)',
-          },
-          '100%': {
-            opacity: '1',
-            transform: 'translateX(0)',
-          },
-        },
-
-        'slide-down': {
-          '0%': {
-            opacity: '0',
-            transform: 'translateY(-10px)',
-          },
-          '100%': {
-            opacity: '1',
-            transform: 'translateY(0)',
-          },
-        },
-
-        'scale-in': {
-          '0%': {
-            opacity: '0',
-            transform: 'scale(0.95)',
-          },
-          '100%': {
-            opacity: '1',
-            transform: 'scale(1)',
-          },
-        },
-
-        'spin-slow': {
-          '0%': {
-            transform: 'rotate(0deg)',
-          },
-          '100%': {
-            transform: 'rotate(360deg)',
-          },
-        },
+        'fade-up': { '0%': { opacity: '0', transform: 'translateY(12px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+        'fade-in': { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-6px)' } },
+        'slide-down': { '0%': { opacity: '0', transform: 'translateY(-8px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+        'scale-in': { '0%': { opacity: '0', transform: 'scale(0.96)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+        'spin-slow': { '0%': { transform: 'rotate(0deg)' }, '100%': { transform: 'rotate(360deg)' } },
       },
-
       animation: {
-        'arch-reveal':
-          'arch-reveal 1s cubic-bezier(0.16,1,0.3,1) forwards',
-
-        'fade-up':
-          'fade-up 0.6s ease-out forwards',
-
-        'fade-up-slow':
-          'fade-up 0.9s ease-out forwards',
-
-        'fade-in':
-          'fade-in 0.5s ease-out forwards',
-
-        float:
-          'float 4s ease-in-out infinite',
-
-        shimmer:
-          'shimmer 2.5s linear infinite',
-
-        'pulse-soft':
-          'pulse-soft 2s ease-in-out infinite',
-
-        'slide-in-left':
-          'slide-in-left 0.4s ease-out forwards',
-
-        'slide-down':
-          'slide-down 0.35s ease-out forwards',
-
-        'scale-in':
-          'scale-in 0.3s ease-out forwards',
-
-        'spin-slow':
-          'spin-slow 3s linear infinite',
+        'fade-up': 'fade-up 0.3s ease-out forwards',
+        'fade-in': 'fade-in 0.25s ease-out forwards',
+        float: 'float 3.5s ease-in-out infinite',
+        'slide-down': 'slide-down 0.25s ease-out forwards',
+        'scale-in': 'scale-in 0.2s ease-out forwards',
+        'spin-slow': 'spin-slow 2s linear infinite',
       },
-
-      transitionTimingFunction: {
-        arch: 'cubic-bezier(0.16, 1, 0.3, 1)',
-      },
+      transitionDuration: { DEFAULT: '180ms' },
+      transitionTimingFunction: { botanical: 'cubic-bezier(0.16, 1, 0.3, 1)' },
     },
   },
-
   plugins: [],
 };

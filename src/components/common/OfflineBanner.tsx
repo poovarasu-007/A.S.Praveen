@@ -7,10 +7,11 @@ interface OfflineBannerProps {
 }
 
 export const OfflineBanner: React.FC<OfflineBannerProps> = ({ onNavigateToBackup }) => {
-  const { settings } = useSettings();
+  const { settings, t } = useSettings();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [dismissed, setDismissed] = useState(false);
   const [showBackupReminder, setShowBackupReminder] = useState(false);
+  const [daysSince, setDaysSince] = useState(0);
 
   useEffect(() => {
     const onOnline  = () => setIsOnline(true);
@@ -28,12 +29,14 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ onNavigateToBackup
       const lastBackup = settings.lastBackupDate;
       if (!lastBackup) {
         setShowBackupReminder(true);
+        setDaysSince(99);
         return;
       }
-      const daysSince = Math.floor(
+      const days = Math.floor(
         (Date.now() - new Date(lastBackup).getTime()) / 86_400_000
       );
-      setShowBackupReminder(daysSince >= settings.backupReminderDays);
+      setDaysSince(days);
+      setShowBackupReminder(days >= settings.backupReminderDays);
     }
   }, [settings]);
 
@@ -44,15 +47,20 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ onNavigateToBackup
       <div
         className="flex items-center justify-between px-4 py-2 text-xs no-print"
         style={{
-          background: 'rgba(234,179,8,0.08)',
-          borderBottom: '1px solid rgba(234,179,8,0.2)',
+          background: '#FFF7E0',
+          borderBottom: '1px solid #B7791F',
+          color: '#6B4A0B',
         }}
       >
-        <div className="flex items-center gap-2" style={{ color: '#fbbf24' }}>
-          <WifiOff size={13} />
-          <span>You are currently offline. All data is saved locally.</span>
+        <div className="flex items-center gap-2 font-medium">
+          <WifiOff size={14} className="text-[#B7791F]" />
+          <span>{t.offlineMode}</span>
         </div>
-        <button onClick={() => setDismissed(true)} className="btn-ghost p-1">
+        <button
+          onClick={() => setDismissed(true)}
+          className="p-1 rounded text-[#6B4A0B] hover:bg-[#B7791F]/20 cursor-pointer"
+          aria-label={t.close}
+        >
           <X size={14} />
         </button>
       </div>
@@ -64,24 +72,28 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({ onNavigateToBackup
       <div
         className="flex items-center justify-between px-4 py-2 text-xs no-print"
         style={{
-          background: 'rgba(92,124,137,0.08)',
-          borderBottom: '1px solid rgba(92,124,137,0.15)',
+          background: '#EAF8E7',
+          borderBottom: '1px solid #C1E6BA',
+          color: '#023337',
         }}
       >
-        <div className="flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.65)' }}>
-          <Database size={13} style={{ color: '#5C7C89' }} />
+        <div className="flex items-center gap-2 font-medium">
+          <Database size={14} className="text-[#4DA674]" />
           <span>
-            Backup reminder: It&apos;s been a while since your last backup.{' '}
+            {t.backupReminderMsg.replace('{days}', String(daysSince))}{' '}
             <button
               onClick={() => { onNavigateToBackup(); setDismissed(true); }}
-              className="underline underline-offset-2 transition-colors hover:text-white"
-              style={{ color: '#5C7C89' }}
+              className="font-bold underline underline-offset-2 text-[#287056] hover:text-[#023337] cursor-pointer ml-1"
             >
-              Backup now
+              {t.backupNow}
             </button>
           </span>
         </div>
-        <button onClick={() => setDismissed(true)} className="btn-ghost p-1">
+        <button
+          onClick={() => setDismissed(true)}
+          className="p-1 rounded text-[#023337] hover:bg-[#C1E6BA]/40 cursor-pointer"
+          aria-label={t.close}
+        >
           <X size={14} />
         </button>
       </div>

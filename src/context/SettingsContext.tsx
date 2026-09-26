@@ -1,13 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { BusinessSettings } from '../types';
 import { db, DEFAULT_BUSINESS_SETTINGS } from '../db/db';
+import { translations, type TranslationDictionary } from '../utils/translations';
+import {
+  DEFAULT_LANGUAGE,
+  applyLanguage,
+  getStoredLanguage,
+  storeLanguage,
+  type LanguageCode,
+} from '../utils/i18n';
 
 interface SettingsContextType {
   settings: BusinessSettings;
   updateSettings: (newSettings: Partial<BusinessSettings>, performedBy: string) => Promise<boolean>;
   isOnline: boolean;
-  language: 'en' | 'ta';
-  setLanguage: (lang: 'en' | 'ta') => void;
+  language: LanguageCode;
+  setLanguage: (lang: LanguageCode) => void;
+  toggleLanguage: () => void;
+  t: TranslationDictionary;
   isBackupDue: boolean;
   daysSinceLastBackup: number;
 }
@@ -16,8 +26,40 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<BusinessSettings>(DEFAULT_BUSINESS_SETTINGS);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [language, setLanguage] = useState<'en' | 'ta'>('en');
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator === 'undefined' ? true : navigator.onLine,
+  );
+
+  // Read and validate the saved preference once, then keep it in React state
+  // so switching languages does not reload or reset the current form/session.
+  const [language, setLanguageState] = useState<LanguageCode>(getStoredLanguage);
+
+  useEffect(() => {
+    applyLanguage(language);
+    if (typeof document !== 'undefined') {
+      document.title = language === 'ta'
+        ? 'ஏ.எஸ். பிரவீன் டிரேடர்ஸ் | விவசாய பில்லிங் சிஸ்டம்'
+        : 'A.S. Praveen Traders | Agricultural Billing System';
+    }
+  }, [language]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    const englishKeys = Object.keys(translations.en);
+    const tamilKeys = new Set(Object.keys(translations.ta));
+    const missingTamil = englishKeys.filter((key) => !tamilKeys.has(key));
+    if (missingTamil.length) console.warn('[i18n] Missing Tamil translation keys:', missingTamil);
+  }, []);
+
+  const setLanguage = (lang: LanguageCode) => {
+    if (lang !== 'en' && lang !== 'ta') return;
+    setLanguageState(lang);
+    storeLanguage(lang);
+  };
+
+  const toggleLanguage = () => {
+    setLanguage(language === DEFAULT_LANGUAGE ? 'ta' : DEFAULT_LANGUAGE);
+  };
 
   // Load settings from DB
   const loadSettings = async () => {
@@ -97,6 +139,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }
 
+  const t = translations[language];
+
   return (
     <SettingsContext.Provider
       value={{
@@ -105,6 +149,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isOnline,
         language,
         setLanguage,
+        toggleLanguage,
+        t,
         isBackupDue,
         daysSinceLastBackup
       }}

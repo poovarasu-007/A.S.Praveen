@@ -337,7 +337,9 @@ export const INITIAL_PRODUCTS: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[]
   }
 ];
 
-export async function initializeDatabase(): Promise<void> {
+let databaseInitializationPromise: Promise<void> | null = null;
+
+async function seedDatabase(): Promise<void> {
   const productCount = await db.products.count();
   const now = new Date().toISOString();
 
@@ -397,4 +399,15 @@ export async function initializeDatabase(): Promise<void> {
       details: 'Created Admin and Operator default credentials'
     });
   }
+}
+
+/** Share one initialization promise across React StrictMode mounts and retries. */
+export function initializeDatabase(): Promise<void> {
+  if (!databaseInitializationPromise) {
+    databaseInitializationPromise = seedDatabase().catch((error) => {
+      databaseInitializationPromise = null;
+      throw error;
+    });
+  }
+  return databaseInitializationPromise;
 }

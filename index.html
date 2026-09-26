@@ -1,16 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#011425" />
-    <meta name="description" content="A.S.Praveen Traders - Agricultural Products & Farm Inputs Billing System" />
-    <title>A.S.Praveen Traders | Agricultural Billing System</title>
-    <!-- PWA Manifest -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#E3F5DD" />
+    <meta name="description" content="A.S. Praveen Traders agricultural products and farm-inputs billing system" />
+    <title>A.S. Praveen Traders | Agricultural Billing System</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23023337'/%3E%3Cpath d='M50 77V31m0 18c-12-2-20-9-22-21 12 1 20 8 22 21Zm0 0c12-2 20-9 22-21-12 1-20 8-22 21Z' fill='none' stroke='%23C1E6BA' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="manifest" href="/manifest.json" />
+    <script>
+      // Apply the persisted language/theme before React paints to avoid a flash.
+      (function () {
+        try {
+          var language = window.localStorage.getItem('as_praveen_language');
+          document.documentElement.lang = language === 'ta' ? 'ta' : 'en';
+          document.documentElement.dir = 'ltr';
+          document.documentElement.dataset.language = document.documentElement.lang;
+          var theme = window.localStorage.getItem('as_praveen_theme');
+          document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+        } catch (error) {
+          document.documentElement.dataset.theme = 'light';
+        }
+      }());
+    </script>
   </head>
-  <body class="bg-[#011425] text-white antialiased selection:bg-[#1F4959] selection:text-white min-h-screen">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

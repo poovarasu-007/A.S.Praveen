@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Loader2, Lock, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 import { verifyPassword } from '../../utils/security';
 
 export interface ConfirmModalProps {
@@ -31,8 +32,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   warningText,
   detailsText,
   billDetails,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   variant = 'danger',
   confirmButtonColor,
   requirePassword = false,
@@ -41,9 +42,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onCancel,
 }) => {
   const { currentUser } = useAuth();
+  const { t } = useSettings();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const effectiveConfirmLabel = confirmLabel || t.confirm;
+  const effectiveCancelLabel = cancelLabel || t.cancel;
 
   /* Lock body scroll while open */
   useEffect(() => {
@@ -70,14 +75,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       : 'danger');
 
   const accentColor = {
-    danger: { icon: 'rgba(239,68,68,0.9)', border: 'rgba(239,68,68,0.35)', bg: 'rgba(239,68,68,0.12)' },
-    warning: { icon: 'rgba(234,179,8,0.9)', border: 'rgba(234,179,8,0.35)', bg: 'rgba(234,179,8,0.12)' },
-    info: { icon: 'rgba(92,124,137,0.9)', border: 'rgba(92,124,137,0.35)', bg: 'rgba(92,124,137,0.12)' },
+    danger: { icon: '#B42318', border: '#B42318', bg: '#FDECEC' },
+    warning: { icon: '#B7791F', border: '#B7791F', bg: '#FFF7E0' },
+    info: { icon: '#287056', border: '#C1E6BA', bg: '#EAF8E7' },
   }[effectiveVariant];
 
   const btnClass = {
     danger: 'btn-danger',
-    warning: 'btn-warning',
+    warning: 'bg-[#B7791F] hover:bg-[#966318] text-white',
     info: 'btn-primary',
   }[effectiveVariant];
 
@@ -87,13 +92,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
     if (requirePassword) {
       if (!password) {
-        setError('Please enter your admin password to proceed');
+        setError(t.passwordRequired);
         return;
       }
       if (currentUser?.passwordHash) {
         const isMatch = await verifyPassword(password, currentUser.passwordHash);
         if (!isMatch) {
-          setError('Incorrect admin password. Action aborted.');
+          setError(t.incorrectAdminPassword);
           return;
         }
       }
@@ -104,7 +109,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       await onConfirm();
       setPassword('');
     } catch (err: any) {
-      setError(err?.message || 'Operation failed');
+      setError(err?.message || t.error);
     } finally {
       setIsSubmitting(false);
     }
@@ -115,13 +120,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div
-      className="modal-overlay animate-fade-in z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+      className="modal-overlay animate-fade-in z-50 flex items-center justify-center p-4 bg-[#023337]/50 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-title"
     >
       <div
-        className="card-glass-dark w-full max-w-md animate-scale-in border border-[#1F4959]/60 shadow-2xl rounded-2xl overflow-hidden bg-[#0a1926]/95 text-slate-100"
+        className="w-full max-w-md animate-scale-in border border-[#C1E6BA] shadow-2xl rounded-2xl overflow-hidden bg-white text-[#023337]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header bar */}
@@ -133,7 +138,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             >
               <AlertTriangle size={20} style={{ color: accentColor.icon }} />
             </div>
-            <h3 id="confirm-title" className="text-white font-semibold text-base">
+            <h3 id="confirm-title" className="text-[#023337] font-bold text-base">
               {title}
             </h3>
           </div>
@@ -141,7 +146,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+            className="text-[#78958A] hover:text-[#023337] p-1 rounded-lg transition-colors cursor-pointer"
+             aria-label={t.close}
           >
             <X size={18} />
           </button>
@@ -150,53 +156,54 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         {/* Content & Form */}
         <form onSubmit={handleSubmit} className="p-6 pt-3 space-y-4">
           {displayText && (
-            <p className="text-sm text-slate-300 leading-relaxed font-normal">
+            <p className="text-sm text-[#28564B] leading-relaxed font-normal">
               {displayText}
             </p>
           )}
 
           {billDetails && (
-            <div className="bg-[#011425]/80 border border-[#1F4959]/50 rounded-xl p-3.5 space-y-1.5 text-xs text-slate-300">
+            <div className="bg-[#EAF8E7] border border-[#C1E6BA] rounded-xl p-3.5 space-y-1.5 text-xs text-[#023337]">
               <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">Bill Number:</span>
-                <span className="font-mono font-bold text-teal-300">{billDetails.billNumber}</span>
+                <span className="text-[#55766A] font-medium">{t.billNumber}:</span>
+                <span className="font-mono font-bold text-[#023337]">{billDetails.billNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">Customer:</span>
-                <span className="font-bold text-white">{billDetails.customerName}</span>
+                <span className="text-[#55766A] font-medium">{t.customers}:</span>
+                <span className="font-bold text-[#023337]">{billDetails.customerName}</span>
               </div>
-              <div className="flex justify-between border-t border-[#1F4959]/40 pt-1.5 mt-1.5">
-                <span className="text-slate-400 font-medium">Amount:</span>
-                <span className="font-bold text-amber-300 text-sm font-mono">{billDetails.amount}</span>
+              <div className="flex justify-between border-t border-[#C1E6BA] pt-1.5 mt-1.5">
+                <span className="text-[#55766A] font-medium">{t.amount}:</span>
+                <span className="font-bold text-[#388A64] text-sm font-mono">{billDetails.amount}</span>
               </div>
             </div>
           )}
 
           {detailsText && (
-            <div className="text-xs text-amber-200/90 bg-amber-950/30 border border-amber-500/30 rounded-xl p-3">
+            <div className="text-xs text-[#6B4A0B] bg-[#FFF7E0] border border-[#B7791F]/40 rounded-xl p-3">
               {detailsText}
             </div>
           )}
 
           {requirePassword && (
             <div className="space-y-1.5 pt-1">
-              <label className="block text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
-                <Lock className="w-3.5 h-3.5 text-teal-400" />
-                <span>Confirm with Admin Password:</span>
+              <label htmlFor="confirm-password" className="block text-xs font-semibold text-[#28564B] flex items-center space-x-1.5">
+                <Lock className="w-3.5 h-3.5 text-[#4DA674]" />
+                <span>{t.confirmAdminPassword}:</span>
               </label>
               <input
+                id="confirm-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                className="w-full px-3.5 py-2 text-sm bg-[#011425] border border-[#1F4959] rounded-xl text-white placeholder:text-slate-500 focus:ring-2 focus:ring-teal-500/50 focus:border-teal-400 focus:outline-none transition-all"
+                placeholder={t.passwordPlaceholder}
+                className="input-arch"
                 autoFocus
               />
             </div>
           )}
 
           {error && (
-            <p className="text-xs text-rose-300 font-medium bg-rose-950/40 border border-rose-500/40 p-2.5 rounded-xl">
+            <p className="text-xs text-[#8A1C1C] font-medium bg-[#FDECEC] border border-[#B42318] p-2.5 rounded-xl">
               {error}
             </p>
           )}
@@ -211,23 +218,23 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
               type="button"
               onClick={onCancel}
               disabled={busy}
-              className="btn-outline flex-1 py-2.5 rounded-xl text-xs font-medium"
+              className="btn-light flex-1 py-2.5 rounded-xl text-xs font-semibold"
             >
-              {cancelLabel}
+              {effectiveCancelLabel}
             </button>
             <button
               id="confirm-action-btn"
               type="submit"
               disabled={busy}
-              className={`${btnClass} flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg`}
+              className={`${btnClass} flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md`}
             >
               {busy ? (
                 <>
                   <Loader2 size={15} className="animate-spin" />
-                  <span>Processing…</span>
+                  <span>{t.processing}</span>
                 </>
               ) : (
-                confirmLabel
+                effectiveConfirmLabel
               )}
             </button>
           </div>
