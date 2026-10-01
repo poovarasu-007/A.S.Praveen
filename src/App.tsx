@@ -100,34 +100,36 @@ export const App: React.FC = () => {
 
         {/* Dynamic Content View with transparent background over the agricultural scenery */}
         <main className="flex-1 overflow-y-auto bg-transparent p-3 sm:p-4 md:p-6 print:p-0 print:overflow-visible">
-          {currentSection === 'dashboard' && (
-            <Dashboard
-              onNavigateToNewBill={() => setCurrentSection('billing')}
-              onNavigateToHistory={() => setCurrentSection('history')}
-              onSelectBillToView={(b) => {
-                setInspectedBill(b);
-                setIsDetailsOpen(true);
-              }}
-            />
-          )}
+          <div key={currentSection} className="page-transition-wrapper animate-page-enter h-full">
+            {currentSection === 'dashboard' && (
+              <Dashboard
+                onNavigateToNewBill={() => setCurrentSection('billing')}
+                onNavigateToHistory={() => setCurrentSection('history')}
+                onSelectBillToView={(b) => {
+                  setInspectedBill(b);
+                  setIsDetailsOpen(true);
+                }}
+              />
+            )}
 
-          {currentSection === 'billing' && <BillingCounter />}
+            {currentSection === 'billing' && <BillingCounter />}
 
-          {currentSection === 'products' && <ProductMaster />}
+            {currentSection === 'products' && <ProductMaster />}
 
-          {currentSection === 'customers' && <CustomerList />}
+            {currentSection === 'customers' && <CustomerList />}
 
-          {currentSection === 'history' && <BillHistory />}
+            {currentSection === 'history' && <BillHistory />}
 
-          {currentSection === 'reports' && <SalesReports />}
+            {currentSection === 'reports' && <SalesReports />}
 
-          {currentSection === 'backup' && <BackupRestore />}
+            {currentSection === 'backup' && <BackupRestore />}
 
-          {currentSection === 'users' && <UserManagement />}
+            {currentSection === 'users' && <UserManagement />}
 
-          {currentSection === 'settings' && <BusinessSettingsView />}
+            {currentSection === 'settings' && <BusinessSettingsView />}
 
-          {currentSection === 'audit' && <AuditLogViewer />}
+            {currentSection === 'audit' && <AuditLogViewer />}
+          </div>
         </main>
       </div>
 

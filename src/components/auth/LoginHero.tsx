@@ -33,35 +33,11 @@ export const LoginHero: React.FC<LoginHeroProps> = ({ entered }) => {
       }`}
       aria-hidden="true"
     >
-      {/* ── IMAGE 1: Primary Full-Cover Agricultural Hero Background ───── */}
+      {/* ── Unified Multi-Photo Agricultural Composite Panorama ───────── */}
       <div
-        className="absolute inset-0 bg-cover bg-no-repeat bg-[center_36%] sm:bg-[center_38%] lg:bg-[center_center]"
+        className="absolute inset-0 composite-bg-pan"
         style={{
-          backgroundImage: "url('/images/farmer_bullock_ploughing.jpg')",
-        }}
-      />
-
-      {/* ── IMAGE 3: Soft blended background layer (farmers in paddy field) ── */}
-      <div
-        className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-15 mix-blend-screen"
-        style={{
-          backgroundImage: "url('/images/farmers_rain_field.jpg')",
-          maskImage:
-            'radial-gradient(ellipse 65% 55% at 85% 65%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 75%)',
-          WebkitMaskImage:
-            'radial-gradient(ellipse 65% 55% at 85% 65%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 75%)',
-        }}
-      />
-
-      {/* ── IMAGE 2: Subtle secondary agricultural detail with feather mask ── */}
-      <div
-        className="pointer-events-none absolute bottom-0 right-0 hidden h-[40%] w-[45%] bg-cover bg-center opacity-20 mix-blend-soft-light xl:block"
-        style={{
-          backgroundImage: "url('/images/farmer_close_ploughing.jpg')",
-          maskImage:
-            'radial-gradient(ellipse 80% 70% at 95% 95%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 55%, transparent 85%)',
-          WebkitMaskImage:
-            'radial-gradient(ellipse 80% 70% at 95% 95%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 55%, transparent 85%)',
+          backgroundImage: "url('/images/agricultural_composite_panorama.webp'), url('/images/agricultural_composite_fitted.webp'), url('/images/agricultural_composite_panorama.jpg')",
         }}
       />
 
@@ -70,6 +46,7 @@ export const LoginHero: React.FC<LoginHeroProps> = ({ entered }) => {
         <div className="mist-layer mist-layer-1" />
         <div className="mist-layer mist-layer-2" />
         <div className="mist-layer mist-layer-3" />
+        <div className="mist-layer mist-layer-4" />
       </div>
 
       {/* ── Subtle botanical tint for brand cohesion ─────────────────── */}
